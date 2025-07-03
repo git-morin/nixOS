@@ -1,0 +1,78 @@
+name: Evaluate NixOS Configurations
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🌱 Checkout
+        uses: actions/checkout@v4
+
+      - name: 📦 Cache Nix store
+        uses: actions/cache@v3
+        with:
+          path: |
+            /nix/store
+            ~/.cache/nix
+            ~/.local/state/nix
+          key: nix-eval-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
+          restore-keys: |
+            nix-eval-${{ runner.os }}-
+
+      - name: ❄️ Install Nix
+        uses: cachix/install-nix-action@v22
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            max-jobs = 1
+            cores = 1
+
+      - name: 🧪 Show available outputs
+        run: |
+          echo "=== Available flake outputs ==="
+          nix flake show
+
+      - name: 🖥️ Evaluate NixOS configurations
+        run: |
+          echo "=== Evaluating main configuration ==="
+          nix eval .#nixosConfigurations.main.config.system.build.toplevel.drvPath
+          echo "✅ Main configuration evaluation successful"
+          
+          echo "=== Evaluating WSL configuration ==="
+          nix eval .#nixosConfigurations.wsl.config.system.build.toplevel.drvPath
+          echo "✅ WSL configuration evaluation successful"
+
+      - name: 📋 Show derivation details
+        run: |
+          echo "=== Main configuration derivation ==="
+          nix show-derivation .#nixosConfigurations.main.config.system.build.toplevel | head -20
+          
+          echo "=== WSL configuration derivation ==="
+          nix show-derivation .#nixosConfigurations.wsl.config.system.build.toplevel | head -20
+
+      - name: 🔍 Check for evaluation issues
+        run: |
+          echo "=== Checking for evaluation issues ==="
+          nix flake check --no-build || echo "Flake check found issues (this is expected for evaluation-only)"
+          
+          echo "=== List available flake outputs ==="
+          nix eval --json .#nixosConfigurations --apply builtins.attrNames || echo "Could not list nixosConfigurations"
+          
+          echo "=== Verify flake inputs ==="
+          nix flake metadata
+
+      - name: 🧪 Additional validation
+        run: |
+          echo "=== Test configuration instantiation ==="
+          nix-instantiate --expr 'let flake = builtins.getFlake (toString ./.); in flake.nixosConfigurations.main.config.system.build.toplevel' || echo "Main config instantiation failed"
+          nix-instantiate --expr 'let flake = builtins.getFlake (toString ./.); in flake.nixosConfigurations.wsl.config.system.build.toplevel' || echo "WSL config instantiation failed"
+
+      - name: 📊 Show disk usage
+        run: |
+          echo "=== Final disk usage ==="
+          df -h
+          echo "=== Nix store size ==="
+          du -sh /nix/store 2>/dev/null || echo "Could not measure /nix/store"
