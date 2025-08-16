@@ -24,6 +24,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
       url = "github:nix-community/NixOS-WSL";
     };
+    proxmox-nixos = {
+      inputs.nixpkgs.follows = "nixpkgs";
+      url = "github:SaumonNet/proxmox-nixos";
+    };
   };
   outputs = inputs: inputs.flakegen ./flake.in.nix inputs;
 }
