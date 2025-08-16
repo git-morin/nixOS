@@ -14,6 +14,11 @@ let
             inputs.nixos-wsl.nixosModules.wsl
           ] else if config == "proxmox" then [
             inputs.proxmox-nixos.nixosModules.proxmox-ve
+            ({ ... }: {
+              nixpkgs.overlays = [
+                inputs.proxmox-nixos.overlays.${system}
+              ];
+            })
           ] else [
             inputs.minegrub-theme.nixosModules.default
             "${inputs.nixpkgs}/nixos/modules/virtualisation/qemu-vm.nix"
