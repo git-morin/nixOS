@@ -31,9 +31,7 @@
         (n: n != "default.nix" && builtins.match ".*\\.nix$" n != null)
         (builtins.attrNames (builtins.readDir configsPath));
     in
-      map (x: configsPath + "/${x}") configFiles ++ [
-        ../common
-      ];
+      map (x: configsPath + "/${x}") configFiles;
 
   programs.home-manager.enable = true;
 }
