@@ -44,6 +44,10 @@ jobs:
           echo "=== Evaluating WSL configuration ==="
           nix eval .#nixosConfigurations.wsl.config.system.build.toplevel.drvPath
           echo "✅ WSL configuration evaluation successful"
+          
+          echo "=== Evaluating Proxmox configuration ==="
+          nix eval .#nixosConfigurations.proxmox.config.system.build.toplevel.drvPath
+          echo "✅ Proxmox configuration evaluation successful"
 
       - name: 📋 Show derivation details
         run: |
@@ -52,6 +56,9 @@ jobs:
           
           echo "=== WSL configuration derivation ==="
           nix show-derivation .#nixosConfigurations.wsl.config.system.build.toplevel | head -20
+          
+          echo "=== Proxmox configuration derivation ==="
+          nix show-derivation .#nixosConfigurations.proxmox.config.system.build.toplevel | head -20
 
       - name: 🔍 Check for evaluation issues
         run: |
@@ -69,6 +76,7 @@ jobs:
           echo "=== Test configuration instantiation ==="
           nix-instantiate --expr 'let flake = builtins.getFlake (toString ./.); in flake.nixosConfigurations.main.config.system.build.toplevel' || echo "Main config instantiation failed"
           nix-instantiate --expr 'let flake = builtins.getFlake (toString ./.); in flake.nixosConfigurations.wsl.config.system.build.toplevel' || echo "WSL config instantiation failed"
+          nix-instantiate --expr 'let flake = builtins.getFlake (toString ./.); in flake.nixosConfigurations.proxmox.config.system.build.toplevel' || echo "Proxmox config instantiation failed"
 
       - name: 📊 Show disk usage
         run: |
