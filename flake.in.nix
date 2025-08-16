@@ -11,6 +11,7 @@
     nixvim = (dep "github:nix-community/nixvim");
     minegrub-theme = (dep "github:Lxtharia/minegrub-theme");
     nixos-wsl = (dep "github:nix-community/NixOS-WSL");
+    proxmox-nixos = (dep "github:SaumonNet/proxmox-nixos");
   }; # run `flakeGen` after modifying this.
 
   outputs = {
@@ -20,6 +21,7 @@
     nixvim,
     minegrub-theme,
     nixos-wsl,
+    proxmox-nixos,
     ...
   }@inputs:
     flake-parts.lib.mkFlake { inherit inputs; } {

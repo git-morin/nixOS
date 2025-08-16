@@ -1,6 +1,6 @@
 { inputs, ... }:
 let
-  nixosConfigurations = system: isWsl:
+  nixosConfigurations = system: config:
     builtins.mapAttrs
       (hostname: userList:
         inputs.nixpkgs.lib.nixosSystem {
@@ -10,8 +10,10 @@ let
             ../hosts/${hostname}
             inputs.home-manager.nixosModules.home-manager
             (import ./home-manager.nix { inherit inputs system userList; })
-          ] ++ (if isWsl then [
+          ] ++ (if config == "wsl" then [
             inputs.nixos-wsl.nixosModules.wsl
+          ] else if config == "proxmox" then [
+            inputs.proxmox-nixos.nixosModules.proxmox
           ] else [
             inputs.minegrub-theme.nixosModules.default
             "${inputs.nixpkgs}/nixos/modules/virtualisation/qemu-vm.nix"
@@ -20,10 +22,13 @@ let
       );
 in {
   flake.nixosConfigurations =
-    (nixosConfigurations "x86_64-linux" false {
+    (nixosConfigurations "x86_64-linux" "default" {
       main = [ "gab" ];
     }) //
-    (nixosConfigurations "x86_64-linux" true {
+    (nixosConfigurations "x86_64-linux" "wsl" {
       wsl = [ "gab-wsl" ];
+    }) //
+    (nixosConfigurations "x86_64-linux" "proxmox" {
+      proxmox = [ "gab-proxmox" ];
     });
 }
