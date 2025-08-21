@@ -25,6 +25,24 @@ let
           ]);
         }
       );
+
+isoConfigurations = system:
+  let
+    hostsWithIsos = {
+      main-iso = "main";
+      proxmox-iso = "proxmox";
+    };
+  in
+    builtins.mapAttrs
+      (isoName: hostName:
+        inputs.nixpkgs.lib.nixosSystem {
+          inherit system;
+          specialArgs = { inherit inputs; };
+          modules = [
+            ../iso/${hostName}.nix
+          ];
+        }
+      ) hostsWithIsos;
 in {
   flake.nixosConfigurations =
     (nixosConfigurations "x86_64-linux" "default" {
@@ -35,5 +53,6 @@ in {
     }) //
     (nixosConfigurations "x86_64-linux" "proxmox" {
       proxmox = [ "gab-proxmox" ];
-    });
+    }) //
+    (isoConfigurations "x86_64-linux");
 }
