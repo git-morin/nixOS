@@ -1,0 +1,217 @@
+name: Build NixOS ISO Images
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'hosts/**'
+      - 'flakes/**'
+      - 'flake.nix'
+      - 'flake.lock'
+      - '.github/workflows/build-iso.yml'
+  workflow_dispatch:
+    inputs:
+      hosts:
+        description: 'Hosts to build (comma-separated: main,proxmox or "all")'
+        required: false
+        default: 'main,proxmox'
+        type: string
+      upload_artifacts:
+        description: 'Upload ISO artifacts'
+        required: false
+        default: true
+        type: boolean
+
+env:
+  NIX_CONFIG: |
+    experimental-features = nix-command flakes
+    max-jobs = auto
+    cores = 0
+    build-users-group = nixbld
+
+jobs:
+  # Determine which hosts to build
+  prepare:
+    runs-on: self-hosted
+    outputs:
+      hosts: ${{ steps.set-hosts.outputs.hosts }}
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: 🌱 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🎯 Determine hosts to build
+        id: set-hosts
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            INPUT_HOSTS="${{ github.event.inputs.hosts }}"
+          else
+            INPUT_HOSTS="all"
+          fi
+          
+          if [[ "$INPUT_HOSTS" == "all" ]]; then
+            HOSTS="main,proxmox"  # Exclude WSL as it doesn't need traditional ISOs
+          else
+            HOSTS="$INPUT_HOSTS"
+          fi
+          
+          echo "hosts=$HOSTS" >> $GITHUB_OUTPUT
+          echo "Building ISOs for hosts: $HOSTS"
+
+      - name: 🔧 Set build matrix
+        id: set-matrix
+        run: |
+          HOSTS_JSON=$(echo '${{ steps.set-hosts.outputs.hosts }}' | sed 's/,/","/g' | sed 's/^/["/' | sed 's/$/"]/')
+          echo "matrix={\"host\":$HOSTS_JSON}" >> $GITHUB_OUTPUT
+          echo "Matrix: $HOSTS_JSON"
+
+  # Build ISO for each host
+  build-iso:
+    needs: prepare
+    runs-on: self-hosted
+    strategy:
+      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
+      fail-fast: false
+    
+    steps:
+      - name: 🌱 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🧹 Cleanup previous builds
+        run: |
+          # Clean up any previous build artifacts
+          sudo rm -rf /tmp/nixos-iso-* || true
+          sudo rm -rf result* || true
+
+      - name: 📊 Check available space
+        run: |
+          echo "=== Disk usage before build ==="
+          df -h
+          echo "=== Available memory ==="
+          free -h
+
+      - name: ❄️ Verify Nix installation
+        run: |
+          echo "=== Nix version ==="
+          nix --version
+          echo "=== Nix configuration ==="
+          nix show-config | grep -E "(experimental-features|max-jobs|cores)"
+
+      - name: 🔍 Verify configuration exists
+        run: |
+          echo "=== Checking if ${{ matrix.host }}-iso configuration exists ==="
+          nix eval --raw .#nixosConfigurations.${{ matrix.host }}-iso.config.system.build.toplevel.drvPath
+          echo "✅ ISO Configuration ${{ matrix.host }}-iso exists"
+
+      - name: 🏗️ Build ISO image for ${{ matrix.host }}
+        run: |
+          echo "=== Building ISO for ${{ matrix.host }} ==="
+          
+          # Build the ISO using our pre-configured ISO modules
+          nix build --print-build-logs .#nixosConfigurations.${{ matrix.host }}-iso.config.system.build.isoImage \
+            --extra-experimental-features "nix-command flakes" \
+            --max-jobs 4 \
+            || (echo "❌ ISO build failed for ${{ matrix.host }}" && exit 1)
+          
+          echo "✅ ISO build completed for ${{ matrix.host }}"
+
+      - name: 📦 Prepare ISO artifact
+        run: |
+          echo "=== Preparing ISO artifact ==="
+          
+          # Find the built ISO
+          ISO_PATH=$(find result/iso -name "*.iso" -type f | head -1)
+          
+          if [[ -z "$ISO_PATH" ]]; then
+            echo "❌ No ISO found in result/iso/"
+            ls -la result/ || true
+            ls -la result/iso/ || true
+            exit 1
+          fi
+          
+          ISO_NAME=$(basename "$ISO_PATH")
+          ISO_SIZE=$(du -h "$ISO_PATH" | cut -f1)
+          
+          echo "Found ISO: $ISO_PATH"
+          echo "ISO size: $ISO_SIZE"
+          
+          # Create a directory for artifacts
+          mkdir -p artifacts
+          
+          # Copy ISO with a consistent name
+          cp "$ISO_PATH" "artifacts/nixos-${{ matrix.host }}-$(date +%Y%m%d-%H%M).iso"
+          
+          # Create metadata file
+          cat > "artifacts/nixos-${{ matrix.host }}-metadata.json" << EOF
+          {
+            "host": "${{ matrix.host }}",
+            "iso_name": "$ISO_NAME",
+            "iso_size": "$ISO_SIZE",
+            "build_date": "$(date -Iseconds)",
+            "commit_sha": "${{ github.sha }}",
+            "commit_ref": "${{ github.ref_name }}"
+          }
+          EOF
+          
+          echo "=== Artifact contents ==="
+          ls -la artifacts/
+
+      - name: 🧪 Verify ISO integrity
+        run: |
+          echo "=== Verifying ISO integrity ==="
+          ISO_FILE=$(find artifacts -name "nixos-${{ matrix.host }}-*.iso" | head -1)
+          
+          if [[ -f "$ISO_FILE" ]]; then
+            # Check if the ISO is readable
+            file "$ISO_FILE"
+            
+            # Check ISO size (should be reasonable, not empty)
+            ISO_SIZE_BYTES=$(stat -c%s "$ISO_FILE")
+            if [[ $ISO_SIZE_BYTES -lt 100000000 ]]; then  # Less than 100MB is suspicious
+              echo "⚠️  Warning: ISO size seems small ($ISO_SIZE_BYTES bytes)"
+            else
+              echo "✅ ISO size looks reasonable: $ISO_SIZE_BYTES bytes"
+            fi
+          else
+            echo "❌ ISO file not found"
+            exit 1
+          fi
+
+      - name: ⬆️ Upload ISO artifact
+        if: ${{ github.event.inputs.upload_artifacts != 'false' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: nixos-${{ matrix.host }}-iso
+          path: artifacts/
+          retention-days: 30
+          compression-level: 0  # ISOs are already compressed
+
+      - name: 📊 Post-build cleanup and stats
+        run: |
+          echo "=== Final disk usage ==="
+          df -h
+          echo "=== Cleaning up build artifacts ==="
+          sudo rm -rf result* || true
+          sudo nix-collect-garbage -d || true
+
+  # Summary job
+  summary:
+    needs: [prepare, build-iso]
+    runs-on: self-hosted
+    if: always()
+    steps:
+      - name: 📋 Build Summary
+        run: |
+          echo "=== Build Summary ==="
+          echo "Requested hosts: ${{ needs.prepare.outputs.hosts }}"
+          echo "Build status: ${{ needs.build-iso.result }}"
+          
+          if [[ "${{ needs.build-iso.result }}" == "success" ]]; then
+            echo "✅ All ISO builds completed successfully!"
+          elif [[ "${{ needs.build-iso.result }}" == "failure" ]]; then
+            echo "❌ Some ISO builds failed"
+            exit 1
+          else
+            echo "⚠️  Build completed with issues"
+          fi
