@@ -24,6 +24,7 @@ on:
         type: boolean
 
 env:
+  HOME: /home/runner
   NIX_CONFIG: |
     experimental-features = nix-command flakes
     max-jobs = auto
@@ -38,8 +39,24 @@ jobs:
       hosts: ${{ steps.set-hosts.outputs.hosts }}
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
+      - name: 🏠 Set up environment
+        run: |
+          echo "HOME=${HOME:-/tmp/runner-home}" >> $GITHUB_ENV
+          echo "USER=${USER:-runner}" >> $GITHUB_ENV
+          mkdir -p "${HOME:-/tmp/runner-home}"
+
       - name: 🌱 Checkout
         uses: actions/checkout@v4
+
+      - name: ❄️ Install Nix
+        uses: cachix/install-nix-action@v22
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            max-jobs = auto
+            cores = 0
+        env:
+          HOME: ${{ env.HOME }}
 
       - name: 🎯 Determine hosts to build
         id: set-hosts
@@ -75,8 +92,24 @@ jobs:
       fail-fast: false
     
     steps:
+      - name: 🏠 Set up environment
+        run: |
+          echo "HOME=${HOME:-/tmp/runner-home}" >> $GITHUB_ENV
+          echo "USER=${USER:-runner}" >> $GITHUB_ENV
+          mkdir -p "${HOME:-/tmp/runner-home}"
+
       - name: 🌱 Checkout
         uses: actions/checkout@v4
+
+      - name: ❄️ Install Nix
+        uses: cachix/install-nix-action@v22
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            max-jobs = 4
+            cores = 1
+        env:
+          HOME: ${{ env.HOME }}
 
       - name: 🧹 Cleanup previous builds
         run: |
@@ -201,6 +234,11 @@ jobs:
     runs-on: self-hosted
     if: always()
     steps:
+      - name: 🏠 Set up environment
+        run: |
+          echo "HOME=${HOME:-/tmp/runner-home}" >> $GITHUB_ENV
+          mkdir -p "${HOME:-/tmp/runner-home}"
+
       - name: 📋 Build Summary
         run: |
           echo "=== Build Summary ==="
