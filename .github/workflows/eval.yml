@@ -20,6 +20,28 @@ jobs:
           echo "HOME: ${HOME:-/tmp/runner-home}"
           echo "USER: ${USER:-runner}"
 
+      - name: 🧹 Clean up previous Nix installation remnants
+        run: |
+          echo "=== Cleaning up previous Nix installation remnants ==="
+          # Remove backup files that prevent reinstallation
+          sudo rm -f /etc/bash.bashrc.backup-before-nix || true
+          sudo rm -f /etc/bashrc.backup-before-nix || true
+          sudo rm -f /etc/zshrc.backup-before-nix || true
+          sudo rm -f /etc/profile.backup-before-nix || true
+          
+          # Clean up any partial Nix installations
+          sudo rm -rf /nix/var/nix/daemon-socket || true
+          
+          # Check if Nix is already installed and working
+          if command -v nix >/dev/null 2>&1; then
+            echo "Nix is already installed, checking version:"
+            nix --version || echo "Nix installed but not working properly"
+            echo "NIX_INSTALL_SKIP=true" >> $GITHUB_ENV
+          else
+            echo "Nix not found, will install"
+            echo "NIX_INSTALL_SKIP=false" >> $GITHUB_ENV
+          fi
+
       - name: 🐛 Debug environment
         run: |
           echo "Current user: $(whoami)"
@@ -43,6 +65,7 @@ jobs:
             nix-eval-${{ runner.os }}-
 
       - name: ❄️ Install Nix
+        if: env.NIX_INSTALL_SKIP != 'true'
         uses: cachix/install-nix-action@v22
         with:
           extra_nix_config: |
@@ -51,6 +74,18 @@ jobs:
             cores = 1
         env:
           HOME: ${{ env.HOME }}
+
+      - name: ❄️ Configure existing Nix
+        if: env.NIX_INSTALL_SKIP == 'true'
+        run: |
+          echo "Configuring existing Nix installation"
+          mkdir -p $HOME/.config/nix
+          cat > $HOME/.config/nix/nix.conf << EOF
+          experimental-features = nix-command flakes
+          max-jobs = 1
+          cores = 1
+          EOF
+          echo "Nix configuration updated"
 
       - name: 🧪 Show available outputs
         run: |
