@@ -3,7 +3,7 @@
 {
   imports = [
     ./base.nix
-    ../hosts/common
+    ../hosts/common/iso.nix
   ];
 
   services.xserver.enable = lib.mkForce false;
