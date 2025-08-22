@@ -4,10 +4,30 @@ on:
     branches:
       - main
 
+env:
+  HOME: /home/runner
+
 jobs:
   evaluate:
     runs-on: self-hosted
     steps:
+      - name: 🏠 Set up environment
+        run: |
+          echo "HOME=${HOME:-/tmp/runner-home}" >> $GITHUB_ENV
+          echo "USER=${USER:-runner}" >> $GITHUB_ENV
+          mkdir -p "${HOME:-/tmp/runner-home}"
+          echo "Environment setup complete:"
+          echo "HOME: ${HOME:-/tmp/runner-home}"
+          echo "USER: ${USER:-runner}"
+
+      - name: 🐛 Debug environment
+        run: |
+          echo "Current user: $(whoami)"
+          echo "HOME: ${HOME:-'NOT SET'}"
+          echo "PWD: $PWD"
+          echo "Available space:"
+          df -h
+
       - name: 🌱 Checkout
         uses: actions/checkout@v4
 
@@ -29,6 +49,8 @@ jobs:
             experimental-features = nix-command flakes
             max-jobs = 1
             cores = 1
+        env:
+          HOME: ${{ env.HOME }}
 
       - name: 🧪 Show available outputs
         run: |
