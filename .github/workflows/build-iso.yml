@@ -63,6 +63,8 @@ jobs:
           sudo rm -f /etc/bashrc.backup-before-nix || true
           sudo rm -f /etc/zshrc.backup-before-nix || true
           sudo rm -f /etc/profile.backup-before-nix || true
+          sudo rm -f /etc/profile.d/nix.sh.backup-before-nix || true
+          sudo rm -f /etc/profile.d/nix.sh || true
           sudo rm -rf /nix/var/nix/daemon-socket || true
           sudo rm -rf /nix/var/nix/profiles/per-user/*/profile* || true
           
@@ -74,6 +76,35 @@ jobs:
 
       - name: 🌱 Checkout
         uses: actions/checkout@v4
+
+      - name: 🧹 Clean up previous Nix installation remnants
+        run: |
+          echo "=== Cleaning up previous Nix installation remnants ==="
+          
+          # Stop any running Nix daemon
+          sudo systemctl stop nix-daemon || true
+          sudo pkill -f nix-daemon || true
+          
+          # Kill any Nix processes
+          sudo pkill -f "nix " || true
+          sudo pkill -f "nix-" || true
+          sleep 2
+          
+          # Remove backup files that prevent reinstallation
+          sudo rm -f /etc/bash.bashrc.backup-before-nix || true
+          sudo rm -f /etc/bashrc.backup-before-nix || true
+          sudo rm -f /etc/zshrc.backup-before-nix || true
+          sudo rm -f /etc/profile.backup-before-nix || true
+          sudo rm -f /etc/profile.d/nix.sh.backup-before-nix || true
+          sudo rm -f /etc/profile.d/nix.sh || true
+          sudo rm -rf /nix/var/nix/daemon-socket || true
+          sudo rm -rf /nix/var/nix/profiles/per-user/*/profile* || true
+          
+          if command -v nix >/dev/null 2>&1 && nix --version >/dev/null 2>&1; then
+            echo "NIX_INSTALL_SKIP=true" >> $GITHUB_ENV
+          else
+            echo "NIX_INSTALL_SKIP=false" >> $GITHUB_ENV
+          fi
 
       - name: ❄️ Install Nix
         if: env.NIX_INSTALL_SKIP != 'true'

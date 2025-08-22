@@ -6,7 +6,9 @@
       inputs.nixpkgs-lib.follows = "nixpkgs";
       url = "github:hercules-ci/flake-parts";
     };
-    flakegen.url = "github:jorsn/flakegen";
+    flakegen = {
+      url = "github:jorsn/flakegen";
+    };
     home-manager = {
       inputs.nixpkgs.follows = "nixpkgs";
       url = "github:nix-community/home-manager";
@@ -15,7 +17,9 @@
       inputs.nixpkgs.follows = "nixpkgs";
       url = "github:Lxtharia/minegrub-theme";
     };
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs = {
+      url = "github:nixos/nixpkgs/nixos-unstable";
+    };
     nixvim = {
       inputs.nixpkgs.follows = "nixpkgs";
       url = "github:nix-community/nixvim";
