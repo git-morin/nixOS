@@ -1,5 +1,5 @@
 {
-  virtualisation.proxmox.storage = {
+  virtualization.proxmox.storage = {
       "directory" = {
         type = "dir";
         content = [
