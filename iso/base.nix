@@ -19,6 +19,8 @@
     };
   };
 
+  users.mutableUsers = true;
+  users.allowNoPasswordLogin = true;
   users.users.root.hashedPassword = ""; # Set empty password for root in the installer
 
   networking = {
