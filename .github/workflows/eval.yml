@@ -23,22 +23,39 @@ jobs:
       - name: 🧹 Clean up previous Nix installation remnants
         run: |
           echo "=== Cleaning up previous Nix installation remnants ==="
+          
+          # Stop any running Nix daemon
+          echo "Stopping Nix daemon if running..."
+          sudo systemctl stop nix-daemon || true
+          sudo pkill -f nix-daemon || true
+          
+          # Kill any Nix processes
+          echo "Killing any remaining Nix processes..."
+          sudo pkill -f "nix " || true
+          sudo pkill -f "nix-" || true
+          
+          # Wait a moment for processes to terminate
+          sleep 2
+          
           # Remove backup files that prevent reinstallation
+          echo "Removing backup files..."
           sudo rm -f /etc/bash.bashrc.backup-before-nix || true
           sudo rm -f /etc/bashrc.backup-before-nix || true
           sudo rm -f /etc/zshrc.backup-before-nix || true
           sudo rm -f /etc/profile.backup-before-nix || true
           
-          # Clean up any partial Nix installations
+          # Clean up daemon socket and other runtime files
+          echo "Cleaning up runtime files..."
           sudo rm -rf /nix/var/nix/daemon-socket || true
+          sudo rm -rf /nix/var/nix/profiles/per-user/*/profile* || true
           
-          # Check if Nix is already installed and working
-          if command -v nix >/dev/null 2>&1; then
-            echo "Nix is already installed, checking version:"
-            nix --version || echo "Nix installed but not working properly"
+          # Check if we can run nix commands
+          if command -v nix >/dev/null 2>&1 && nix --version >/dev/null 2>&1; then
+            echo "Nix is already installed and working"
+            nix --version
             echo "NIX_INSTALL_SKIP=true" >> $GITHUB_ENV
           else
-            echo "Nix not found, will install"
+            echo "Nix not found or not working, will install"
             echo "NIX_INSTALL_SKIP=false" >> $GITHUB_ENV
           fi
 
