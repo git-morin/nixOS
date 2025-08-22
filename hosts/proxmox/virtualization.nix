@@ -1,6 +1,6 @@
 { pkgs, ...}:
 {
-     virtualisation.proxmox.vms = {
+     virtualization.proxmox.vms = {
         "100" = {
           enable = true;
           name = "satellite";
@@ -199,7 +199,7 @@
         };
       };
 
-    virtualisation.proxmox.containers = {
+    virtualization.proxmox.containers = {
         "101" = {
           enable = true;
           name = "blackhole";
