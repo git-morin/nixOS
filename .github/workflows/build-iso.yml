@@ -45,10 +45,26 @@ jobs:
           echo "USER=${USER:-runner}" >> $GITHUB_ENV
           mkdir -p "${HOME:-/tmp/runner-home}"
 
+      - name: 🧹 Clean up previous Nix installation remnants
+        run: |
+          echo "=== Cleaning up previous Nix installation remnants ==="
+          sudo rm -f /etc/bash.bashrc.backup-before-nix || true
+          sudo rm -f /etc/bashrc.backup-before-nix || true
+          sudo rm -f /etc/zshrc.backup-before-nix || true
+          sudo rm -f /etc/profile.backup-before-nix || true
+          sudo rm -rf /nix/var/nix/daemon-socket || true
+          
+          if command -v nix >/dev/null 2>&1; then
+            echo "NIX_INSTALL_SKIP=true" >> $GITHUB_ENV
+          else
+            echo "NIX_INSTALL_SKIP=false" >> $GITHUB_ENV
+          fi
+
       - name: 🌱 Checkout
         uses: actions/checkout@v4
 
       - name: ❄️ Install Nix
+        if: env.NIX_INSTALL_SKIP != 'true'
         uses: cachix/install-nix-action@v22
         with:
           extra_nix_config: |
@@ -57,6 +73,16 @@ jobs:
             cores = 0
         env:
           HOME: ${{ env.HOME }}
+
+      - name: ❄️ Configure existing Nix
+        if: env.NIX_INSTALL_SKIP == 'true'
+        run: |
+          mkdir -p $HOME/.config/nix
+          cat > $HOME/.config/nix/nix.conf << EOF
+          experimental-features = nix-command flakes
+          max-jobs = auto
+          cores = 0
+          EOF
 
       - name: 🎯 Determine hosts to build
         id: set-hosts
@@ -102,6 +128,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: ❄️ Install Nix
+        if: env.NIX_INSTALL_SKIP != 'true'
         uses: cachix/install-nix-action@v22
         with:
           extra_nix_config: |
@@ -110,6 +137,16 @@ jobs:
             cores = 1
         env:
           HOME: ${{ env.HOME }}
+
+      - name: ❄️ Configure existing Nix
+        if: env.NIX_INSTALL_SKIP == 'true'
+        run: |
+          mkdir -p $HOME/.config/nix
+          cat > $HOME/.config/nix/nix.conf << EOF
+          experimental-features = nix-command flakes
+          max-jobs = 4
+          cores = 1
+          EOF
 
       - name: 🧹 Cleanup previous builds
         run: |
