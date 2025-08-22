@@ -7,7 +7,7 @@ in
 {
   imports = [
     ./base.nix
-    ../hosts/common
+    ../hosts/common/iso.nix
   ];
 
   services.proxmox-ve.enable = lib.mkForce false;
