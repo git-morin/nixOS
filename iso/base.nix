@@ -19,14 +19,10 @@
     };
   };
 
-  users.mutableUsers = true;
-  users.allowNoPasswordLogin = true;
-  users.users.root.hashedPassword = ""; # Set empty password for root in the installer
-
   networking = {
-    networkmanager.enable = true;
-    wireless.enable = false;
-    firewall.allowedTCPPorts = [ 22 ];
+    networkmanager.enable = lib.mkDefault true;
+    wireless.enable = lib.mkDefault false;
+    firewall.allowedTCPPorts = lib.mkDefault [ 22 ];
   };
 
   environment.systemPackages = with pkgs; [
@@ -82,6 +78,6 @@
     font = "Lat2-Terminus16";
     keyMap = "us";
   };
-  i18n.defaultLocale = "en_US.UTF-8";
+  i18n.defaultLocale = lib.mkDefault "en_US.UTF-8";
   time.timeZone = lib.mkDefault "America/Toronto";
 }
