@@ -1,15 +1,12 @@
 name: Build NixOS ISO Images
 
 on:
-  push:
+  workflow_run:
+    workflows: ["Evaluate NixOS Configurations"]
+    types:
+      - completed
     branches:
       - main
-    paths:
-      - 'hosts/**'
-      - 'flakes/**'
-      - 'flake.nix'
-      - 'flake.lock'
-      - '.github/workflows/build-iso.yml'
   workflow_dispatch:
     inputs:
       hosts:
@@ -32,8 +29,31 @@ env:
     build-users-group = nixbld
 
 jobs:
+  # Check if evaluation workflow succeeded
+  check-eval:
+    runs-on: self-hosted
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success') }}
+    outputs:
+      eval-success: ${{ steps.check.outputs.success }}
+    steps:
+      - name: Check evaluation workflow result
+        id: check
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "Manual trigger - skipping eval check"
+            echo "success=true" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.event.workflow_run.conclusion }}" == "success" ]]; then
+            echo "Evaluation workflow succeeded"
+            echo "success=true" >> $GITHUB_OUTPUT
+          else
+            echo "Evaluation workflow failed or was cancelled"
+            echo "success=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
   # Determine which hosts to build
   prepare:
+    needs: check-eval
     runs-on: self-hosted
     outputs:
       hosts: ${{ steps.set-hosts.outputs.hosts }}
@@ -127,7 +147,7 @@ jobs:
 
   # Build ISO for each host
   build-iso:
-    needs: prepare
+    needs: [check-eval, prepare]
     runs-on: self-hosted
     strategy:
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
@@ -324,7 +344,7 @@ jobs:
 
   # Summary job
   summary:
-    needs: [prepare, build-iso]
+    needs: [check-eval, prepare, build-iso]
     runs-on: self-hosted
     if: always()
     steps:
