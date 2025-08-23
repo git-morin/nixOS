@@ -3,6 +3,27 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'hosts/**'
+      - 'flakes/**'
+      - 'homes/**'
+      - 'iso/**'
+      - 'flake.nix'
+      - 'flake.in.nix'
+      - 'flake.lock'
+      - '.github/workflows/eval.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'hosts/**'
+      - 'flakes/**'
+      - 'homes/**'
+      - 'iso/**'
+      - 'flake.nix'
+      - 'flake.in.nix'
+      - 'flake.lock'
+  workflow_dispatch:
 
 env:
   HOME: /home/runner
@@ -126,17 +147,31 @@ jobs:
           echo "=== Evaluating Proxmox configuration ==="
           nix eval .#nixosConfigurations.proxmox.config.system.build.toplevel.drvPath
           echo "✅ Proxmox configuration evaluation successful"
+          
+          echo "=== Evaluating main ISO configuration ==="
+          nix eval .#nixosConfigurations.main-iso.config.system.build.toplevel.drvPath
+          echo "✅ Main ISO configuration evaluation successful"
+          
+          echo "=== Evaluating proxmox ISO configuration ==="
+          nix eval .#nixosConfigurations.proxmox-iso.config.system.build.toplevel.drvPath
+          echo "✅ Proxmox ISO configuration evaluation successful"
 
       - name: 📋 Show derivation details
         run: |
           echo "=== Main configuration derivation ==="
-          nix show-derivation .#nixosConfigurations.main.config.system.build.toplevel | head -20
+          nix derivation show .#nixosConfigurations.main.config.system.build.toplevel | head -10
           
           echo "=== WSL configuration derivation ==="
-          nix show-derivation .#nixosConfigurations.wsl.config.system.build.toplevel | head -20
+          nix derivation show .#nixosConfigurations.wsl.config.system.build.toplevel | head -10
           
           echo "=== Proxmox configuration derivation ==="
-          nix show-derivation .#nixosConfigurations.proxmox.config.system.build.toplevel | head -20
+          nix derivation show .#nixosConfigurations.proxmox.config.system.build.toplevel | head -10
+          
+          echo "=== Main ISO configuration derivation ==="
+          nix derivation show .#nixosConfigurations.main-iso.config.system.build.toplevel | head -10
+          
+          echo "=== Proxmox ISO configuration derivation ==="
+          nix derivation show .#nixosConfigurations.proxmox-iso.config.system.build.toplevel | head -10
 
       - name: 🔍 Check for evaluation issues
         run: |
@@ -155,6 +190,8 @@ jobs:
           nix-instantiate --expr 'let flake = builtins.getFlake (toString ./.); in flake.nixosConfigurations.main.config.system.build.toplevel' || echo "Main config instantiation failed"
           nix-instantiate --expr 'let flake = builtins.getFlake (toString ./.); in flake.nixosConfigurations.wsl.config.system.build.toplevel' || echo "WSL config instantiation failed"
           nix-instantiate --expr 'let flake = builtins.getFlake (toString ./.); in flake.nixosConfigurations.proxmox.config.system.build.toplevel' || echo "Proxmox config instantiation failed"
+          nix-instantiate --expr 'let flake = builtins.getFlake (toString ./.); in flake.nixosConfigurations.main-iso.config.system.build.toplevel' || echo "Main ISO config instantiation failed"
+          nix-instantiate --expr 'let flake = builtins.getFlake (toString ./.); in flake.nixosConfigurations.proxmox-iso.config.system.build.toplevel' || echo "Proxmox ISO config instantiation failed"
 
       - name: 📊 Show disk usage
         run: |

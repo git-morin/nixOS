@@ -1,36 +1,43 @@
-# Do not modify! This file is generated.
-
 {
   inputs = {
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     flake-parts = {
-      inputs.nixpkgs-lib.follows = "nixpkgs";
       url = "github:hercules-ci/flake-parts";
-    };
-    flakegen = {
-      url = "github:jorsn/flakegen";
+      inputs.nixpkgs-lib.follows = "nixpkgs";
     };
     home-manager = {
-      inputs.nixpkgs.follows = "nixpkgs";
       url = "github:nix-community/home-manager";
-    };
-    minegrub-theme = {
       inputs.nixpkgs.follows = "nixpkgs";
-      url = "github:Lxtharia/minegrub-theme";
-    };
-    nixpkgs = {
-      url = "github:nixos/nixpkgs/nixos-unstable";
     };
     nixvim = {
-      inputs.nixpkgs.follows = "nixpkgs";
       url = "github:nix-community/nixvim";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    minegrub-theme = {
+      url = "github:Lxtharia/minegrub-theme";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     nixos-wsl = {
-      inputs.nixpkgs.follows = "nixpkgs";
       url = "github:nix-community/NixOS-WSL";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     proxmox-nixos = {
       url = "github:SaumonNet/proxmox-nixos";
     };
   };
-  outputs = inputs: inputs.flakegen ./flake.in.nix inputs;
+
+  outputs = {
+    nixpkgs,
+    flake-parts,
+    home-manager,
+    nixvim,
+    minegrub-theme,
+    nixos-wsl,
+    proxmox-nixos,
+    ...
+  }@inputs:
+    flake-parts.lib.mkFlake { inherit inputs; } {
+      systems = nixpkgs.lib.systems.flakeExposed;
+      imports = [ ./flakes ];
+    };
 }

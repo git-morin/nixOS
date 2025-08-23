@@ -6,6 +6,6 @@
     ./nix.nix
     ./security.nix
     ./time.nix
-    ./users.nix
+    ./users-iso.nix  # Use the ISO-specific users configuration
   ];
 }
