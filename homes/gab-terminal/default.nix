@@ -1,7 +1,5 @@
 { inputs, system, lib, ... }: {
   home = {
-    username = lib.mkForce "gab";
-    homeDirectory = lib.mkForce "/home/gab";
     stateVersion = "24.11";
     packages =
       let

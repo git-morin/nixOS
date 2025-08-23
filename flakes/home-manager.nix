@@ -4,17 +4,15 @@
     useGlobalPkgs = true;
     useUserPackages = true;
     extraSpecialArgs = { inherit inputs; };
-    users = builtins.listToAttrs (map (name: {
-      inherit name;
-      value = { config, pkgs, ... }: {
+    users = {
+      gab = { config, pkgs, ... }: {
         imports = [
           ../homes/common
-          ../homes/${name}
-        ];
+        ] ++ (map (name: ../homes/${name}) userList);
         _module.args = {
           inherit inputs system;
         };
       };
-    }) userList);
+    };
   };
 }
