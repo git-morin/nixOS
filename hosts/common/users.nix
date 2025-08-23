@@ -19,32 +19,6 @@
         ];
         hashedPassword = "$y$j9T$nOeSRX0gqLApcicsYKr1.1$IDtjO2PT/iVRMvUmT4LtnmYHPFf9ZkHUEr60OIDuNd0";
       };
-      gab-wsl = {
-        isNormalUser = true;
-        description = "gab-wsl";
-        uid = 1001;
-        group = "gab";
-        shell = pkgs.nushell;
-        extraGroups = [
-          "wheel"
-          "networkmanager"
-          "nixconfig"
-        ];
-        hashedPassword = "$y$j9T$nOeSRX0gqLApcicsYKr1.1$IDtjO2PT/iVRMvUmT4LtnmYHPFf9ZkHUEr60OIDuNd0";
-      };
-      gab-proxmox = {
-        isNormalUser = true;
-        description = "gab-proxmox";
-        uid = 1002;
-        group = "gab";
-        shell = pkgs.nushell;
-        extraGroups = [
-          "wheel"
-          "networkmanager"
-          "nixconfig"
-        ];
-        hashedPassword = "$y$j9T$nOeSRX0gqLApcicsYKr1.1$IDtjO2PT/iVRMvUmT4LtnmYHPFf9ZkHUEr60OIDuNd0";
-      };
     };
     groups = {
       gab.gid = 1000;
