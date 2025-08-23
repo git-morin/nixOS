@@ -9,7 +9,6 @@
   services.xserver.enable = lib.mkForce false;
   services.displayManager.sddm.enable = lib.mkForce false;
   services.desktopManager.plasma6.enable = lib.mkForce false;
-  users.mutableUsers = lib.mkForce true;
   networking.hostName = "nixos-main-installer";
   isoImage = {
     isoName = "nixos-main-installer.iso";
