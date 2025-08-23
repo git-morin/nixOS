@@ -21,7 +21,7 @@
 
   networking = {
     networkmanager.enable = lib.mkDefault true;
-    wireless.enable = lib.mkDefault false;
+    wireless.enable = lib.mkForce false;
     firewall.allowedTCPPorts = lib.mkDefault [ 22 ];
   };
 
