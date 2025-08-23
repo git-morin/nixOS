@@ -8,7 +8,7 @@ in
   _module.args.proxmoxIP = "192.168.2.55";
   imports = [
     ./base.nix
-    ../hosts/common/iso.nix
+    ../hosts/common/iso
   ];
 
   services.proxmox-ve.enable = lib.mkForce false;
