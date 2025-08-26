@@ -68,7 +68,7 @@ in
   isoImage = {
     isoName = "nixos-proxmox-installer.iso";
     volumeID = "NIXOS_PROXMOX";
-    isoBaseName = "nixos-proxmox";
+    isoBaseName = lib.mkForce "nixos-proxmox";
     
     makeEfiBootable = true;
     makeUsbBootable = true;
