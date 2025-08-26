@@ -13,7 +13,7 @@
   isoImage = {
     isoName = "nixos-main-installer.iso";
     volumeID = "NIXOS_MAIN";
-    isoBaseName = "nixos-main";
+    isoBaseName = lib.mkForce "nixos-main";
     makeEfiBootable = true;
     makeUsbBootable = true;
     squashfsCompression = "xz -Xdict-size 100%";
