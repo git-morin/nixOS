@@ -11,7 +11,7 @@ in
     ../hosts/common/iso
   ];
 
-  services.proxmox-ve.enable = lib.mkForce false;
+#  services.proxmox-ve.enable = lib.mkForce false;
   
   networking = {
     hostName = "nixos-proxmox-installer";
