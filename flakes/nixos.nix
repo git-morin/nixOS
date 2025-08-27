@@ -46,13 +46,13 @@ isoConfigurations = system:
 in {
   flake.nixosConfigurations =
     (nixosConfigurations "x86_64-linux" "default" {
-      main = [ "gab-graphical" ];
+      main = [ "graphical" ];
     }) //
     (nixosConfigurations "x86_64-linux" "wsl" {
-      wsl = [ "gab-terminal" ];
+      wsl = [ "terminal" ];
     }) //
     (nixosConfigurations "x86_64-linux" "proxmox" {
-      proxmox = [ "gab-terminal" ];
+      proxmox = [ "terminal" ];
     }) //
     (isoConfigurations "x86_64-linux");
 }
