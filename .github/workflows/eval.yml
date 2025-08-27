@@ -1,4 +1,4 @@
-name: Build and Release NixOS ISO Images
+name: Build and Publish NixOS ISO Images
 
 on:
   push:
@@ -12,7 +12,7 @@ on:
       - 'flake.nix'
       - 'flake.in.nix'
       - 'flake.lock'
-      - '.github/workflows/eval.yml'
+      - '.github/workflows/nixos-build.yml'
   pull_request:
     branches:
       - main
@@ -208,7 +208,6 @@ jobs:
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             INPUT_HOSTS="${{ github.event.inputs.hosts }}"
           else
-            # Only build ISOs on main branch pushes, not PRs
             if [[ "${{ github.event_name }}" == "pull_request" ]]; then
               INPUT_HOSTS=""
             else
@@ -217,7 +216,7 @@ jobs:
           fi
           
           if [[ "$INPUT_HOSTS" == "all" ]]; then
-            HOSTS="main,proxmox"  # Exclude WSL as it doesn't need traditional ISOs
+            HOSTS="main,proxmox"
           else
             HOSTS="$INPUT_HOSTS"
           fi
@@ -367,12 +366,10 @@ jobs:
           
           mkdir -p artifacts
           
-          # Create ISO with consistent naming
           TIMESTAMP=$(date +%Y%m%d-%H%M)
           NEW_ISO_NAME="nixos-${{ matrix.host }}-${TIMESTAMP}.iso"
           cp "$ISO_PATH" "artifacts/${NEW_ISO_NAME}"
           
-          # Create metadata
           cat > "artifacts/nixos-${{ matrix.host }}-metadata.json" << EOF
           {
             "host": "${{ matrix.host }}",
@@ -446,10 +443,8 @@ jobs:
         run: |
           echo "=== Preparing release assets ==="
           
-          # Create release directory
           mkdir -p release-assets-final
           
-          # Process each host's artifacts
           ASSET_LIST=""
           RELEASE_NOTES="## NixOS ISO Images\n\nBuilt from commit \`${{ github.sha }}\` on $(date -Iseconds)\n\n"
           
@@ -488,19 +483,21 @@ jobs:
           echo "=== Release notes ==="
           cat release-notes.md
 
-      - name: 🏷️ Create release tag
+      - name: 🏷️ Create release tag and name
         id: create-tag
         run: |
-          # Create a unique tag for this build
           TAG_NAME="nixos-iso-$(date +%Y%m%d-%H%M%S)"
+          RELEASE_NAME="NixOS ISO Images - $(date +%Y-%m-%d)"
           echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+          echo "release_name=$RELEASE_NAME" >> $GITHUB_OUTPUT
           echo "Creating tag: $TAG_NAME"
+          echo "Release name: $RELEASE_NAME"
 
       - name: 🚀 Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.create-tag.outputs.tag_name }}
-          name: "NixOS ISO Images - $(date +%Y-%m-%d)"
+          name: ${{ steps.create-tag.outputs.release_name }}
           body_path: release-notes.md
           files: release-assets-final/*
           draft: false
