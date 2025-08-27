@@ -12,7 +12,7 @@ on:
       - 'flake.nix'
       - 'flake.in.nix'
       - 'flake.lock'
-      - '.github/workflows/nixos-build.yml'
+      - '.github/workflows/eval.yml'
   pull_request:
     branches:
       - main
