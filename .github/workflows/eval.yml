@@ -4,30 +4,13 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'hosts/**'
-      - 'flakes/**'
-      - 'homes/**'
-      - 'iso/**'
-      - 'flake.nix'
-      - 'flake.in.nix'
-      - 'flake.lock'
-      - '.github/workflows/eval.yml'
   pull_request:
     branches:
       - main
-    paths:
-      - 'hosts/**'
-      - 'flakes/**'
-      - 'homes/**'
-      - 'iso/**'
-      - 'flake.nix'
-      - 'flake.in.nix'
-      - 'flake.lock'
   workflow_dispatch:
     inputs:
       hosts:
-        description: 'Hosts to build (comma-separated: main,proxmox or "all")'
+        description: 'Hosts to build a ISO from (comma-separated or "all")'
         required: false
         default: 'main,proxmox'
         type: string
@@ -70,20 +53,15 @@ jobs:
           echo "USER: ${USER:-runner}"
 
       - name: 🧹 Clean up previous Nix installation remnants
-        run: |
-          echo "=== Cleaning up previous Nix installation remnants ==="
-          
-          echo "Stopping Nix daemon if running..."
+        run: |          
           sudo systemctl stop nix-daemon || true
           sudo pkill -f nix-daemon || true
           
-          echo "Killing any remaining Nix processes..."
           sudo pkill -f "nix " || true
           sudo pkill -f "nix-" || true
           
           sleep 2
           
-          echo "Removing all Nix backup files..."
           sudo rm -f /etc/bash.bashrc.backup-before-nix || true
           sudo rm -f /etc/bashrc.backup-before-nix || true
           sudo rm -f /etc/zshrc.backup-before-nix || true
@@ -97,7 +75,6 @@ jobs:
           sudo rm -f ~/.zshrc.backup-before-nix || true
           sudo rm -f ~/.config/fish/config.fish.backup-before-nix || true
           
-          echo "Cleaning up runtime files..."
           sudo rm -rf /nix/var/nix/daemon-socket || true
           sudo rm -rf /nix/var/nix/profiles/per-user/*/profile* || true
           
@@ -140,18 +117,15 @@ jobs:
       - name: ❄️ Configure existing Nix
         if: env.NIX_INSTALL_SKIP == 'true'
         run: |
-          echo "Configuring existing Nix installation"
           mkdir -p $HOME/.config/nix
           cat > $HOME/.config/nix/nix.conf << EOF
           experimental-features = nix-command flakes
           max-jobs = 1
           cores = 1
           EOF
-          echo "Nix configuration updated"
 
       - name: 🧪 Show available outputs
         run: |
-          echo "=== Available flake outputs ==="
           nix flake show
 
       - name: 🖥️ Evaluate NixOS configurations
@@ -181,17 +155,13 @@ jobs:
 
       - name: 🔍 Additional validation
         run: |
-          echo "=== Checking for evaluation issues ==="
           nix flake check --no-build || echo "Flake check found issues (this is expected for evaluation-only)"
           
-          echo "=== Verify flake inputs ==="
           nix flake metadata
 
       - name: 📊 Show disk usage
         run: |
-          echo "=== Disk usage after evaluation ==="
           df -h
-          echo "=== Nix store size ==="
           du -sh /nix/store 2>/dev/null || echo "Could not measure /nix/store"
 
   prepare:
@@ -261,16 +231,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: 🧹 Clean up previous Nix installation remnants
-        run: |
-          echo "=== Cleaning up previous Nix installation remnants ==="
-          
+        run: |          
           sudo systemctl stop nix-daemon || true
           sudo pkill -f nix-daemon || true
           sudo pkill -f "nix " || true
           sudo pkill -f "nix-" || true
           sleep 2
           
-          echo "Removing all Nix backup files..."
           sudo rm -f /etc/bash.bashrc.backup-before-nix || true
           sudo rm -f /etc/bashrc.backup-before-nix || true
           sudo rm -f /etc/zshrc.backup-before-nix || true
@@ -319,36 +286,26 @@ jobs:
           sudo rm -rf /tmp/nixos-iso-* || true
           sudo rm -rf result* || true
 
-      - name: 📊 Check available space
-        run: |
-          echo "=== Disk usage before build ==="
-          df -h
-          echo "=== Available memory ==="
-          free -h
-
-      - name: 🔍 Verify configuration exists
-        run: |
-          echo "=== Checking if ${{ matrix.host }}-iso configuration exists ==="
-          nix eval --raw .#nixosConfigurations.${{ matrix.host }}-iso.config.system.build.toplevel.drvPath
-          echo "✅ ISO Configuration ${{ matrix.host }}-iso exists"
+#      - name: 📊 Check available space
+#        run: |
+#          echo "=== Disk usage before build ==="
+#          df -h
+#          echo "=== Available memory ==="
+#          free -h
 
       - name: 🏗️ Build ISO image for ${{ matrix.host }}
         id: build-result
         run: |
-          echo "=== Building ISO for ${{ matrix.host }} ==="
-          
+          nix eval --raw .#nixosConfigurations.${{ matrix.host }}-iso.config.system.build.toplevel.drvPath
           nix build --print-build-logs .#nixosConfigurations.${{ matrix.host }}-iso.config.system.build.isoImage \
             --extra-experimental-features "nix-command flakes" \
             --max-jobs 4 \
             || (echo "❌ ISO build failed for ${{ matrix.host }}" && exit 1)
           
-          echo "✅ ISO build completed for ${{ matrix.host }}"
           echo "success=true" >> $GITHUB_OUTPUT
 
       - name: 📦 Prepare ISO artifact
-        run: |
-          echo "=== Preparing ISO artifact ==="
-          
+        run: |          
           ISO_PATH=$(find result/iso -name "*.iso" -type f | head -1)
           
           if [[ -z "$ISO_PATH" ]]; then
@@ -360,12 +317,7 @@ jobs:
           
           ISO_NAME=$(basename "$ISO_PATH")
           ISO_SIZE=$(du -h "$ISO_PATH" | cut -f1)
-          
-          echo "Found ISO: $ISO_PATH"
-          echo "ISO size: $ISO_SIZE"
-          
           mkdir -p artifacts
-          
           TIMESTAMP=$(date +%Y%m%d-%H%M)
           NEW_ISO_NAME="nixos-${{ matrix.host }}-${TIMESTAMP}.iso"
           cp "$ISO_PATH" "artifacts/${NEW_ISO_NAME}"
@@ -383,30 +335,8 @@ jobs:
           }
           EOF
           
-          echo "=== Artifact contents ==="
-          ls -la artifacts/
-          
-          # Set outputs for package publishing
           echo "iso_path=artifacts/${NEW_ISO_NAME}" >> $GITHUB_OUTPUT
           echo "iso_name=${NEW_ISO_NAME}" >> $GITHUB_OUTPUT
-
-      - name: 🧪 Verify ISO integrity
-        run: |
-          echo "=== Verifying ISO integrity ==="
-          ISO_FILE=$(find artifacts -name "nixos-${{ matrix.host }}-*.iso" | head -1)
-          
-          if [[ -f "$ISO_FILE" ]]; then
-            file "$ISO_FILE"
-            ISO_SIZE_BYTES=$(stat -c%s "$ISO_FILE")
-            if [[ $ISO_SIZE_BYTES -lt 100000000 ]]; then
-              echo "⚠️  Warning: ISO size seems small ($ISO_SIZE_BYTES bytes)"
-            else
-              echo "✅ ISO size looks reasonable: $ISO_SIZE_BYTES bytes"
-            fi
-          else
-            echo "❌ ISO file not found"
-            exit 1
-          fi
 
       - name: ⬆️ Upload ISO artifact
         if: ${{ github.event.inputs.upload_artifacts != 'false' }}
@@ -417,11 +347,8 @@ jobs:
           retention-days: 30
           compression-level: 0
 
-      - name: 📊 Post-build cleanup and stats
+      - name: 📊 Post-build cleanup
         run: |
-          echo "=== Final disk usage ==="
-          df -h
-          echo "=== Cleaning up build artifacts ==="
           sudo rm -rf result* || true
           sudo nix-collect-garbage -d || true
 
@@ -440,9 +367,7 @@ jobs:
 
       - name: 📦 Prepare release assets
         id: prepare-assets
-        run: |
-          echo "=== Preparing release assets ==="
-          
+        run: |          
           mkdir -p release-assets-final
           
           ASSET_LIST=""
@@ -451,21 +376,14 @@ jobs:
           for host_dir in release-artifacts/nixos-*-iso; do
             if [[ -d "$host_dir" ]]; then
               host_name=$(basename "$host_dir" | sed 's/nixos-\(.*\)-iso/\1/')
-              echo "Processing $host_name..."
-          
-              # Find ISO and metadata files
               ISO_FILE=$(find "$host_dir" -name "*.iso" | head -1)
               METADATA_FILE=$(find "$host_dir" -name "*metadata.json" | head -1)
           
               if [[ -f "$ISO_FILE" && -f "$METADATA_FILE" ]]; then
-                # Copy to final directory
                 cp "$ISO_FILE" release-assets-final/
                 cp "$METADATA_FILE" release-assets-final/
-          
-                # Extract info for release notes
                 ISO_NAME=$(basename "$ISO_FILE")
                 ISO_SIZE=$(du -h "$ISO_FILE" | cut -f1)
-          
                 ASSET_LIST="$ASSET_LIST release-assets-final/$ISO_NAME"
                 RELEASE_NOTES="${RELEASE_NOTES}### $host_name\n- **File**: \`$ISO_NAME\`\n- **Size**: $ISO_SIZE\n- **Configuration**: nixosConfigurations.$host_name-iso\n\n"
               else
@@ -473,15 +391,6 @@ jobs:
               fi
             fi
           done
-          
-          echo "asset_list=$ASSET_LIST" >> $GITHUB_OUTPUT
-          echo -e "$RELEASE_NOTES" > release-notes.md
-          
-          echo "=== Release assets prepared ==="
-          ls -la release-assets-final/
-          
-          echo "=== Release notes ==="
-          cat release-notes.md
 
       - name: 🏷️ Create release tag and name
         id: create-tag
@@ -505,42 +414,3 @@ jobs:
           generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  summary:
-    needs: [evaluate, prepare, build-iso, create-release]
-    runs-on: self-hosted
-    if: always()
-    steps:
-      - name: 📋 Build Summary
-        run: |
-          echo "=== Build Summary ==="
-          echo "Evaluation status: ${{ needs.evaluate.result }}"
-          echo "Requested hosts: ${{ needs.prepare.outputs.hosts }}"
-          echo "Build status: ${{ needs.build-iso.result }}"
-          echo "Release status: ${{ needs.create-release.result }}"
-          
-          if [[ "${{ needs.evaluate.result }}" != "success" ]]; then
-            echo "❌ Configuration evaluation failed"
-            exit 1
-          elif [[ "${{ needs.prepare.outputs.hosts }}" == "" ]]; then
-            echo "⚠️  No ISO builds requested for this trigger"
-          elif [[ "${{ needs.build-iso.result }}" == "success" ]]; then
-            echo "✅ All ISO builds completed successfully!"
-          
-            if [[ "${{ needs.create-release.result }}" == "success" ]]; then
-              echo "✅ ISOs published as GitHub release!"
-              echo ""
-              echo "Download ISOs from:"
-              echo "- Repository Releases: ${{ github.server_url }}/${{ github.repository }}/releases"
-              echo "- GitHub Action Artifacts (temporary)"
-            elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
-              echo "ℹ️  No release created for pull request"
-            else
-              echo "⚠️  ISO release creation was skipped or failed"
-            fi
-          elif [[ "${{ needs.build-iso.result }}" == "failure" ]]; then
-            echo "❌ Some ISO builds failed"
-            exit 1
-          else
-            echo "⚠️  Build completed with issues"
-          fi
