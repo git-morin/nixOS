@@ -391,6 +391,11 @@ jobs:
               fi
             fi
           done
+          
+          echo "asset_list=$ASSET_LIST" >> $GITHUB_OUTPUT
+          echo -e "$RELEASE_NOTES" > release-notes.md
+          ls -la release-assets-final/          
+          cat release-notes.md
 
       - name: 🏷️ Create release tag and name
         id: create-tag
