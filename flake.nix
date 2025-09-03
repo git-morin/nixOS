@@ -24,6 +24,14 @@
     proxmox-nixos = {
       url = "github:SaumonNet/proxmox-nixos";
     };
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nixos-anywhere = {
+      url = "github:nix-community/nixos-anywhere";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = {
@@ -34,6 +42,8 @@
     minegrub-theme,
     nixos-wsl,
     proxmox-nixos,
+    disko,
+    nixos-anywhere,
     ...
   }@inputs:
     flake-parts.lib.mkFlake { inherit inputs; } {

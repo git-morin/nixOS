@@ -12,6 +12,8 @@
     minegrub-theme = (dep "github:Lxtharia/minegrub-theme");
     nixos-wsl = (dep "github:nix-community/NixOS-WSL");
     proxmox-nixos = (dep "github:SaumonNet/proxmox-nixos");
+    disko = (dep "github:nix-community/disko");
+    nixos-anywhere = (dep "github:nix-community/nixos-anywhere");
   };
 
   outputs = {
@@ -22,6 +24,8 @@
     minegrub-theme,
     nixos-wsl,
     proxmox-nixos,
+    disko,
+    nixos-anywhere,
     ...
   }@inputs:
     flake-parts.lib.mkFlake { inherit inputs; } {
