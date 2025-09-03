@@ -17,15 +17,18 @@
 ## 🏗️ Overview
 
 ```mermaid
-graph TB
-    A[🏠 homes/] --> B[📂 common/]
-    A --> C[📂 graphical/]
-    A --> D[📂 terminal/]
-    
-    E[🖥️ hosts/] --> F[📂 common/]
-    E --> G[📂 main/]
-    E --> H[📂 wsl/]
-    E --> I[📂 proxmox/]
+---
+config:
+  layout: elk
+---
+flowchart TB
+    A["🏠 homes/"] --> C["📂 graphical"] & D["📂 terminal"] & Z["📂 common"]
+    Z --> C & D
+    C --> G["🖥️ main/"]
+    D --> G & I["🖥️ proxmox/"] & H["🖥️ wsl/"]
+    style C fill:#00C853
+    style D fill:#2962FF
+    style Z fill:#FFD600
 ```
 
 </div>
@@ -37,34 +40,22 @@ graph TB
 </div>
 
 ```
-┌── 🏠 homes/      # Home Manager configurations.
+┌── 🏠 homes/           # Home Manager configurations.
 │   ├── 📂 common/        # Configurations shared across all my environments.
 │   ├── 📂 graphical/     # Configurations for my user with a graphical environment (GUI)
-│   └── 📂 terminal/      # Configurations for my user with a terminal  environment (TUI)
-├── 🏠 hosts/      # NixOS configurations for my hosts machines.
+│   └── 📂 terminal/      # Configurations for my user with a terminal environment (TUI)
+├── 🏠 hosts/           # NixOS configurations for my hosts machines.
 │   ├── 📂 common/        # Common configurations across all hosts.
 │   ├── 📂 main/          # Configuration for my 'main' machine.
 │   ├── 📂 wsl/           # Configuration for a WSL environment.
 │   └── 📂 proxmox/       # Configuration for my ProxmoxVE host.
-├── 💿 iso/        # ISO installer configurations.
-├── 📚 lib/        # Library of helper Nix functions.
-└── 📜 README.md   # You are here.
+├── 💿 iso/             # ISO installer configurations.
+├── 📚 lib/             # Library of helper Nix functions.
+├── 🚀 remote-install/  # nixos-anywhere deployment tools.
+├── 🔧 remote-deploy    # Convenience script for remote deployment.
+└── 📜 README.md        # You are here.
 ```
 
-## 🚀 Quick Start
-
-### Prerequisites
-- [Nix](https://nixos.org/download.html) with flakes enabled
-- Git for cloning the repository
-
-### Installation
-
-```bash
-git clone <your-repo-url> /etc/nixos
-cd /etc/nixos
-sudo nixos-rebuild switch --flake .#<hostname>
-home-manager switch --flake .#<username>@<hostname>
-```
 ---
 <div align='center'>
 
