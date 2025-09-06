@@ -1,11 +1,11 @@
 let
   mkLib = inputs: {
-    # Read all .nix files (except default.nix) and import them
+    # Read all .nix files (except default.nix and _meta.nix) and import them
     importNixFiles =
     path: # path to scan
       let
         nixFiles = builtins.filter
-          (n: n != "default.nix" && builtins.match ".*\\.nix$" n != null)
+          (n: n != "default.nix" && n != "_meta.nix" && builtins.match ".*\\.nix$" n != null)
           (builtins.attrNames (builtins.readDir path));
       in
         map (x: path + "/${x}") nixFiles;
