@@ -53,6 +53,24 @@ jobs:
       - name: 🌱 Checkout
         uses: actions/checkout@v4
 
+      - name: 👥 Create nixbld group and users
+        run: |
+          if ! getent group nixbld >/dev/null; then
+            sudo groupadd -r nixbld
+            echo "✅ Created nixbld group"
+          else
+            echo "✅ nixbld group already exists"
+          fi
+          
+          for i in $(seq 1 10); do
+            if ! getent passwd nixbld$i >/dev/null; then
+              sudo useradd -r -g nixbld -G nixbld -d /var/empty -s /sbin/nologin -c "Nix build user $i" nixbld$i
+              echo "✅ Created nixbld$i user"
+            else
+              echo "✅ nixbld$i user already exists"
+            fi
+          done
+
       - name: ❄️ Install Nix (quick single-user mode)
         uses: nixbuild/nix-quick-install-action@v30
         with:
@@ -193,6 +211,24 @@ jobs:
           
           echo "=== Disk usage before build ==="
           df -h
+
+      - name: 👥 Create nixbld group and users
+        run: |
+          if ! getent group nixbld >/dev/null; then
+            sudo groupadd -r nixbld
+            echo "✅ Created nixbld group"
+          else
+            echo "✅ nixbld group already exists"
+          fi
+          
+          for i in $(seq 1 10); do
+            if ! getent passwd nixbld$i >/dev/null; then
+              sudo useradd -r -g nixbld -G nixbld -d /var/empty -s /sbin/nologin -c "Nix build user $i" nixbld$i
+              echo "✅ Created nixbld$i user"
+            else
+              echo "✅ nixbld$i user already exists"
+            fi
+          done
 
       - name: ❄️ Install Nix (quick single-user mode)
         uses: nixbuild/nix-quick-install-action@v30
