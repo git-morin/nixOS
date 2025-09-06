@@ -52,77 +52,31 @@ jobs:
           echo "HOME: ${HOME:-/tmp/runner-home}"
           echo "USER: ${USER:-runner}"
 
-      - name: 🧹 Clean up previous Nix installation remnants
-        run: |          
-          sudo systemctl stop nix-daemon || true
-          sudo pkill -f nix-daemon || true
-          
-          sudo pkill -f "nix " || true
-          sudo pkill -f "nix-" || true
-          
-          sleep 2
-          
-          sudo rm -f /etc/bash.bashrc.backup-before-nix || true
-          sudo rm -f /etc/bashrc.backup-before-nix || true
-          sudo rm -f /etc/zshrc.backup-before-nix || true
-          sudo rm -f /etc/profile.backup-before-nix || true
-          sudo rm -f /etc/profile.d/nix.sh.backup-before-nix || true
-          sudo rm -f /etc/profile.d/nix.sh || true
-          sudo rm -f /etc/zsh/zshrc.backup-before-nix || true
-          sudo rm -f /etc/fish/config.fish.backup-before-nix || true
-          sudo rm -f ~/.bashrc.backup-before-nix || true
-          sudo rm -f ~/.bash_profile.backup-before-nix || true
-          sudo rm -f ~/.zshrc.backup-before-nix || true
-          sudo rm -f ~/.config/fish/config.fish.backup-before-nix || true
-          
-          sudo rm -rf /nix/var/nix/daemon-socket || true
-          sudo rm -rf /nix/var/nix/profiles/per-user/*/profile* || true
-          
-          sudo rm -f /etc/nix/nix.conf || true
-          
-          if command -v nix >/dev/null 2>&1 && nix --version >/dev/null 2>&1; then
-            echo "Nix is already installed and working"
-            nix --version
-            echo "NIX_INSTALL_SKIP=true" >> $GITHUB_ENV
-          else
-            echo "Nix not found or not working, will install"
-            echo "NIX_INSTALL_SKIP=false" >> $GITHUB_ENV
-          fi
-
       - name: 🌱 Checkout
         uses: actions/checkout@v4
 
-      - name: 📦 Cache Nix store
-        uses: actions/cache@v3
+      - name: ❄️ Install Nix (quick single-user mode)
+        uses: nixbuild/nix-quick-install-action@v28
         with:
-          path: |
-            /nix/store
-            ~/.cache/nix
-            ~/.local/state/nix
-          key: nix-eval-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
-          restore-keys: |
-            nix-eval-${{ runner.os }}-
-
-      - name: ❄️ Install Nix
-        if: env.NIX_INSTALL_SKIP != 'true'
-        uses: cachix/install-nix-action@v22
-        with:
-          extra_nix_config: |
+          nix_conf: |
             experimental-features = nix-command flakes
-            max-jobs = 1
-            cores = 1
-        env:
-          HOME: ${{ env.HOME }}
+            max-jobs = 4
+            cores = 2
+            build-users-group = nixbld
 
-      - name: ❄️ Configure existing Nix
-        if: env.NIX_INSTALL_SKIP == 'true'
-        run: |
-          mkdir -p $HOME/.config/nix
-          cat > $HOME/.config/nix/nix.conf << EOF
-          experimental-features = nix-command flakes
-          max-jobs = 1
-          cores = 1
-          EOF
+      - name: 🗄️ Cache Nix store (evaluation)
+        uses: DeterminateSystems/cache-nix-action@v7
+        with:
+          primary-key: nix-eval-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
+          restore-prefixes-first-match: nix-eval-${{ runner.os }}-
+          # Garbage collect to keep cache under 10GB limit
+          gc-max-store-size: 8000000000  # 8GB
+          # Save cache only if evaluation succeeds
+          save: true
+          # Clean up old caches
+          purge: true
+          purge-created: 7 days
+          purge-last-accessed: 3 days
 
       - name: 🧪 Show available outputs
         run: |
@@ -147,18 +101,21 @@ jobs:
           nix eval .#nixosConfigurations.main-iso.config.system.build.toplevel.drvPath
           echo "✅ Main ISO configuration evaluation successful"
           
+          # Pre-build flake inputs to avoid GC issues later
+          echo "=== Caching flake inputs ==="
+          nix build .#nixosConfigurations.main.config.system.build.toplevel --no-link --print-build-logs
+          
           echo "success=true" >> $GITHUB_OUTPUT
 
       - name: 🔍 Additional validation
         run: |
           nix flake check --no-build || echo "Flake check found issues (this is expected for evaluation-only)"
-          
           nix flake metadata
 
-      - name: 📊 Show disk usage
+      - name: 📊 Show store usage
         run: |
-          df -h
-          du -sh /nix/store 2>/dev/null || echo "Could not measure /nix/store"
+          df -h /nix 2>/dev/null || echo "Could not check /nix filesystem"
+          nix path-info --all --size --human-readable | tail -10
 
   prepare:
     needs: evaluate
@@ -226,88 +183,71 @@ jobs:
       - name: 🌱 Checkout
         uses: actions/checkout@v4
 
-      - name: 🧹 Clean up previous Nix installation remnants
-        run: |          
-          sudo systemctl stop nix-daemon || true
-          sudo pkill -f nix-daemon || true
-          sudo pkill -f "nix " || true
-          sudo pkill -f "nix-" || true
-          sleep 2
-          
-          sudo rm -f /etc/bash.bashrc.backup-before-nix || true
-          sudo rm -f /etc/bashrc.backup-before-nix || true
-          sudo rm -f /etc/zshrc.backup-before-nix || true
-          sudo rm -f /etc/profile.backup-before-nix || true
-          sudo rm -f /etc/profile.d/nix.sh.backup-before-nix || true
-          sudo rm -f /etc/profile.d/nix.sh || true
-          sudo rm -f /etc/zsh/zshrc.backup-before-nix || true
-          sudo rm -f /etc/fish/config.fish.backup-before-nix || true
-          sudo rm -f ~/.bashrc.backup-before-nix || true
-          sudo rm -f ~/.bash_profile.backup-before-nix || true
-          sudo rm -f ~/.zshrc.backup-before-nix || true
-          sudo rm -f ~/.config/fish/config.fish.backup-before-nix || true
-          sudo rm -rf /nix/var/nix/daemon-socket || true
-          sudo rm -rf /nix/var/nix/profiles/per-user/*/profile* || true
-          sudo rm -f /etc/nix/nix.conf || true
-          
-          if command -v nix >/dev/null 2>&1 && nix --version >/dev/null 2>&1; then
-            echo "NIX_INSTALL_SKIP=true" >> $GITHUB_ENV
-          else
-            echo "NIX_INSTALL_SKIP=false" >> $GITHUB_ENV
-          fi
-
-      - name: ❄️ Install Nix
-        if: env.NIX_INSTALL_SKIP != 'true'
-        uses: cachix/install-nix-action@v22
-        with:
-          extra_nix_config: |
-            experimental-features = nix-command flakes
-            max-jobs = 4
-            cores = 1
-        env:
-          HOME: ${{ env.HOME }}
-
-      - name: ❄️ Configure existing Nix
-        if: env.NIX_INSTALL_SKIP == 'true'
+      # Free up disk space on self-hosted runner if needed
+      - name: 🧹 Clean up disk space
         run: |
-          mkdir -p $HOME/.config/nix
-          cat > $HOME/.config/nix/nix.conf << EOF
-          experimental-features = nix-command flakes
-          max-jobs = 4
-          cores = 1
-          EOF
-
-      - name: 🧹 Cleanup previous builds
-        run: |
+          # Remove old build artifacts
           sudo rm -rf /tmp/nixos-iso-* || true
           sudo rm -rf result* || true
+          
+          # Clean up Docker if present (common space hog)
+          docker system prune -af || true
+          docker image prune -af || true
+          
+          echo "=== Disk usage before build ==="
+          df -h
 
-#      - name: 📊 Check available space
-#        run: |
-#          echo "=== Disk usage before build ==="
-#          df -h
-#          echo "=== Available memory ==="
-#          free -h
+      - name: ❄️ Install Nix (quick single-user mode)
+        uses: nixbuild/nix-quick-install-action@v28
+        with:
+          nix_conf: |
+            experimental-features = nix-command flakes
+            max-jobs = 4
+            cores = 2
+            build-users-group = nixbld
+
+      - name: 🗄️ Cache Nix store (build)
+        uses: DeterminateSystems/cache-nix-action@v7
+        with:
+          primary-key: nix-build-${{ matrix.host }}-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
+          restore-prefixes-first-match: |
+            nix-build-${{ matrix.host }}-${{ runner.os }}-
+            nix-eval-${{ runner.os }}-
+          restore-prefixes-all-matches: |
+            nix-eval-${{ runner.os }}-
+          # Aggressive GC for build jobs to stay under GitHub's 10GB limit
+          gc-max-store-size: 6000000000  # 6GB
+          save: ${{ github.event_name != 'pull_request' }}
+          # Purge old caches more aggressively for builds
+          purge: true
+          purge-created: 5 days
+          purge-last-accessed: 2 days
 
       - name: 🏗️ Build ISO image for ${{ matrix.host }}
         id: build-result
         run: |
+          # Pre-evaluate to catch errors early
+          echo "=== Pre-evaluating ISO configuration ==="
           nix eval --raw .#nixosConfigurations.${{ matrix.host }}-iso.config.system.build.toplevel.drvPath
+          
+          # Build the actual ISO
+          echo "=== Building ISO for ${{ matrix.host }} ==="
           nix build --print-build-logs .#nixosConfigurations.${{ matrix.host }}-iso.config.system.build.isoImage \
             --extra-experimental-features "nix-command flakes" \
             --max-jobs 4 \
+            --cores 2 \
             || (echo "❌ ISO build failed for ${{ matrix.host }}" && exit 1)
           
           echo "success=true" >> $GITHUB_OUTPUT
 
       - name: 📦 Prepare ISO artifact
-        run: |          
+        run: |
           ISO_PATH=$(find result/iso -name "*.iso" -type f | head -1)
           
           if [[ -z "$ISO_PATH" ]]; then
             echo "❌ No ISO found in result/iso/"
+            find result -name "*.iso" -type f 2>/dev/null || true
             ls -la result/ || true
-            ls -la result/iso/ || true
             exit 1
           fi
           
@@ -316,8 +256,11 @@ jobs:
           mkdir -p artifacts
           TIMESTAMP=$(date +%Y%m%d-%H%M)
           NEW_ISO_NAME="nixos-${{ matrix.host }}-${TIMESTAMP}.iso"
+          
+          echo "📦 Copying ISO: $ISO_PATH -> artifacts/${NEW_ISO_NAME}"
           cp "$ISO_PATH" "artifacts/${NEW_ISO_NAME}"
           
+          # Create metadata
           cat > "artifacts/nixos-${{ matrix.host }}-metadata.json" << EOF
           {
             "host": "${{ matrix.host }}",
@@ -327,12 +270,15 @@ jobs:
             "build_date": "$(date -Iseconds)",
             "commit_sha": "${{ github.sha }}",
             "commit_ref": "${{ github.ref_name }}",
+            "workflow_run_id": "${{ github.run_id }}",
             "download_url": "Release assets in GitHub repository"
           }
           EOF
           
           echo "iso_path=artifacts/${NEW_ISO_NAME}" >> $GITHUB_OUTPUT
           echo "iso_name=${NEW_ISO_NAME}" >> $GITHUB_OUTPUT
+          
+          echo "✅ ISO ready: ${NEW_ISO_NAME} (${ISO_SIZE})"
 
       - name: ⬆️ Upload ISO artifact
         if: ${{ github.event.inputs.upload_artifacts != 'false' }}
@@ -341,12 +287,18 @@ jobs:
           name: nixos-${{ matrix.host }}-iso
           path: artifacts/
           retention-days: 30
-          compression-level: 0
+          compression-level: 0  # ISOs are already compressed
 
-      - name: 📊 Post-build cleanup
+      - name: 📊 Post-build cleanup and stats
         run: |
+          # Clean up build result to save space
           sudo rm -rf result* || true
-          sudo nix-collect-garbage -d || true
+          
+          echo "=== Final disk usage ==="
+          df -h
+          
+          echo "=== Nix store info ==="
+          nix path-info --all --size --human-readable | tail -5
 
   create-release:
     needs: [evaluate, prepare, build-iso]
@@ -363,11 +315,11 @@ jobs:
 
       - name: 📦 Prepare release assets
         id: prepare-assets
-        run: |          
+        run: |
           mkdir -p release-assets-final
           
           ASSET_LIST=""
-          RELEASE_NOTES="## NixOS ISO Images\n\nBuilt from commit \`${{ github.sha }}\` on $(date -Iseconds)\n\n"
+          RELEASE_NOTES="## NixOS ISO Images\n\nBuilt from commit \`${{ github.sha }}\` on $(date -Iseconds)\n\n### Build Information\n- **Workflow Run**: [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\n- **Commit**: [\`${{ github.sha }}\`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})\n- **Branch/Tag**: \`${{ github.ref_name }}\`\n\n### Available Images\n\n"
           
           for host_dir in release-artifacts/nixos-*-iso; do
             if [[ -d "$host_dir" ]]; then
@@ -381,30 +333,49 @@ jobs:
                 ISO_NAME=$(basename "$ISO_FILE")
                 ISO_SIZE=$(du -h "$ISO_FILE" | cut -f1)
                 ASSET_LIST="$ASSET_LIST release-assets-final/$ISO_NAME"
-                RELEASE_NOTES="${RELEASE_NOTES}### $host_name\n- **File**: \`$ISO_NAME\`\n- **Size**: $ISO_SIZE\n- **Configuration**: nixosConfigurations.$host_name-iso\n\n"
+          
+                # Add checksum
+                ISO_SHA256=$(sha256sum "$ISO_FILE" | cut -d' ' -f1)
+                echo "$ISO_SHA256  $ISO_NAME" > "release-assets-final/${ISO_NAME}.sha256"
+                ASSET_LIST="$ASSET_LIST release-assets-final/${ISO_NAME}.sha256"
+          
+                RELEASE_NOTES="${RELEASE_NOTES}#### 🖥️ $host_name\n- **File**: \`$ISO_NAME\`\n- **Size**: $ISO_SIZE\n- **SHA256**: \`$ISO_SHA256\`\n- **Configuration**: nixosConfigurations.$host_name-iso\n\n"
               else
-                echo "Warning: Missing files for $host_name"
+                echo "⚠️  Warning: Missing files for $host_name"
+                echo "  ISO_FILE: $ISO_FILE"
+                echo "  METADATA_FILE: $METADATA_FILE"
               fi
             fi
           done
           
+          if [[ -z "$ASSET_LIST" ]]; then
+            echo "❌ No assets found to release!"
+            exit 1
+          fi
+          
+          RELEASE_NOTES="${RELEASE_NOTES}### Usage\n\n1. Download the appropriate ISO for your target system\n2. Verify the checksum: \`sha256sum -c nixos-HOST-TIMESTAMP.iso.sha256\`\n3. Flash to USB: \`dd if=nixos-HOST-TIMESTAMP.iso of=/dev/sdX bs=4M status=progress\`\n4. Boot from USB and follow NixOS installation guide\n\n### Support\n\nFor issues with these images, please check the [repository](${{ github.server_url }}/${{ github.repository }}) or create an issue.\n"
+          
           echo "asset_list=$ASSET_LIST" >> $GITHUB_OUTPUT
           echo -e "$RELEASE_NOTES" > release-notes.md
-          ls -la release-assets-final/          
-          cat release-notes.md
+          
+          echo "📋 Release assets prepared:"
+          ls -la release-assets-final/
+          echo ""
+          echo "📝 Release notes preview:"
+          head -20 release-notes.md
 
       - name: 🏷️ Create release tag and name
         id: create-tag
         run: |
           TAG_NAME="nixos-iso-$(date +%Y%m%d-%H%M%S)"
-          RELEASE_NAME="NixOS ISO Images - $(date +%Y-%m-%d)"
+          RELEASE_NAME="NixOS ISO Images - $(date '+%Y-%m-%d %H:%M UTC')"
           echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
           echo "release_name=$RELEASE_NAME" >> $GITHUB_OUTPUT
-          echo "Creating tag: $TAG_NAME"
-          echo "Release name: $RELEASE_NAME"
+          echo "🏷️  Creating release: $RELEASE_NAME"
+          echo "🏷️  Tag: $TAG_NAME"
 
       - name: 🚀 Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.create-tag.outputs.tag_name }}
           name: ${{ steps.create-tag.outputs.release_name }}
@@ -413,5 +384,6 @@ jobs:
           draft: false
           prerelease: false
           generate_release_notes: false
+          make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
