@@ -50,7 +50,7 @@
       system = hostConfig.system or "x86_64-linux";
       specialArgs = { inherit inputs; };
       modules = [
-        ../iso/${hostname}.nix
+        ../iso/${actualHostName}.nix
       ];
     };
 }

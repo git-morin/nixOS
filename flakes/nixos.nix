@@ -1,10 +1,21 @@
 { inputs, ... }:
 let
-  lib = import ../../lib;
+  lib = import ../lib { inherit inputs; };
+
+  validHosts = builtins.filterAttrs
+    (name: type:
+      type == "directory" && name != "common"
+    ) builtins.readDir ../hosts;
 
   hostConfigs = builtins.mapAttrs
-    (name: type: import ../hosts/${name}/inputs.nix)
-    (builtins.filterAttrs (name: type: name != "common") (builtins.readDir ../hosts));
+    (name: type:
+      let
+        inputsPath = ../hosts + "/${name}/inputs.nix";
+      in
+        if builtins.pathExists inputsPath
+        then import inputsPath
+        else throw "inputs.nix not found for host: ${name}"
+    ) validHosts;
 
   nixosConfigurations = builtins.mapAttrs lib.buildNixosConfiguration hostConfigs;
 
@@ -17,5 +28,8 @@ let
       builtins.mapAttrs lib.buildIsoConfiguration hostsWithIsos;
 
 in {
+  # flake-parts
+  flake.nixosConfigurations = nixosConfigurations // isoConfigurations;
+  # used for eval during CI
   nixosConfigurations = nixosConfigurations // isoConfigurations;
 }
