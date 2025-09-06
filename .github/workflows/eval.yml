@@ -84,15 +84,7 @@ jobs:
         run: |
           echo "=== Showing available configurations ==="
           nix flake show | grep -A 20 nixosConfigurations || true
-          
-          echo "=== Debug information ==="
-          echo "Hosts with ISO enabled:"
-          nix eval --json .#debug.hostsWithIsoNames || echo "Debug info not available"
-          echo "ISO configuration names:"
-          nix eval --json .#debug.isoConfigurationNames || echo "Debug info not available"
-          echo "Host configs:"
-          nix eval --json .#debug.hostConfigs || echo "Debug info not available"
-          
+                    
           echo "=== Evaluating main configuration ==="
           nix eval --raw .#nixosConfigurations.main.config.system.build.toplevel.drvPath
           echo "✅ Main configuration evaluation successful"

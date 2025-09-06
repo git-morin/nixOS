@@ -24,7 +24,7 @@ let
         inputsPath = ../hosts + "/${name}/inputs.nix";
       in
         if builtins.pathExists inputsPath
-        then import inputsPath
+        then (import inputsPath) { inherit inputs; }
         else throw "inputs.nix not found for host: ${name}"
     ) validHosts;
 
@@ -44,13 +44,4 @@ let
 
 in {
   flake.nixosConfigurations = nixosConfigurations // isoConfigurations;
-
-  # Debug information - remove after debugging
-  flake.debug = {
-    allHosts = allHosts;
-    validHostNames = validHostNames;
-    hostConfigs = hostConfigs;
-    hostsWithIsoNames = hostsWithIsoNames;
-    isoConfigurationNames = builtins.attrNames isoConfigurations;
-  };
 }
