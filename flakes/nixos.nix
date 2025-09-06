@@ -44,4 +44,13 @@ let
 
 in {
   flake.nixosConfigurations = nixosConfigurations // isoConfigurations;
+
+  # Debug information - remove after debugging
+  flake.debug = {
+    allHosts = allHosts;
+    validHostNames = validHostNames;
+    hostConfigs = hostConfigs;
+    hostsWithIsoNames = hostsWithIsoNames;
+    isoConfigurationNames = builtins.attrNames isoConfigurations;
+  };
 }
