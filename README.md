@@ -16,13 +16,13 @@ config:
   layout: elk
 ---
 flowchart TB
-    A["🏠 homes/"] --> C["📂 graphical"] & D["📂 terminal"] & Z["📂 common"]
+    A["🏠 homes/"] --> C["🖼️ graphical"] & D["📟 terminal"] & Z["🤝 common"]
     Z --> C & D
-    C --> G["🖥️ main/"]
-    D --> G & I["🖥️ server/"] & H["🖥️ wsl/"]
+    C --> G["👑 main/"]
+    D --> G & I["🛢️ server/"] & H["📦 wsl/"]
     style C fill:#00C853
     style D fill:#2962FF
-    style Z fill:#FFD600
+    style Z fill:#FFF9C4
 ```
 
 </div>
