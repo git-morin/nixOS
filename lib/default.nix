@@ -37,7 +37,7 @@
       modules = [
         ../hosts/${hostname}
         inputs.home-manager.nixosModules.home-manager
-        (import ./home-manager.nix {
+        (import ../flakes/home-manager.nix {
           inherit inputs;
           system = hostConfig.system or "x86_64-linux";
           userList = hostConfig.users or [];
