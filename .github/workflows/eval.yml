@@ -83,23 +83,23 @@ jobs:
         id: eval-check
         run: |
           echo "=== Evaluating main configuration ==="
-          nix eval .#nixosConfigurations.main.config.system.build.toplevel.drvPath
+          nix eval .#flake.nixosConfigurations.main.config.system.build.toplevel.drvPath
           echo "✅ Main configuration evaluation successful"
           
           echo "=== Evaluating WSL configuration ==="
-          nix eval .#nixosConfigurations.wsl.config.system.build.toplevel.drvPath
+          nix eval .#flake.nixosConfigurations.wsl.config.system.build.toplevel.drvPath
           echo "✅ WSL configuration evaluation successful"
           
           echo "=== Evaluating Server configuration ==="
-          nix eval .#nixosConfigurations.server.config.system.build.toplevel.drvPath
+          nix eval .#flake.nixosConfigurations.server.config.system.build.toplevel.drvPath
           echo "✅ Server configuration evaluation successful"
           
           echo "=== Evaluating main ISO configuration ==="
-          nix eval .#nixosConfigurations.main-iso.config.system.build.toplevel.drvPath
+          nix eval .#flake.nixosConfigurations.main-iso.config.system.build.toplevel.drvPath
           echo "✅ Main ISO configuration evaluation successful"
           
           echo "=== Caching flake inputs ==="
-          nix build .#nixosConfigurations.main.config.system.build.toplevel --no-link --print-build-logs
+          nix build .#flake.nixosConfigurations.main.config.system.build.toplevel --no-link --print-build-logs
           
           echo "success=true" >> $GITHUB_OUTPUT
 
