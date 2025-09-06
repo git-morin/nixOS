@@ -44,4 +44,5 @@ let
 
 in {
   flake.nixosConfigurations = nixosConfigurations // isoConfigurations;
+  nixosConfigurations = nixosConfigurations // isoConfigurations;
 }
