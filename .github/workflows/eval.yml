@@ -65,7 +65,7 @@ jobs:
             build-users-group = nixbld
 
       - name: 🗄️ Cache Nix store (evaluation)
-        uses: DeterminateSystems/cache-nix-action@v7
+        uses: nix-community/cache-nix-action@v6
         with:
           primary-key: nix-eval-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
           restore-prefixes-first-match: nix-eval-${{ runner.os }}-
@@ -302,7 +302,7 @@ jobs:
           df -h
           
           echo "=== Nix store info ==="
-          nix path-info --all --size --human-readable | tail -5
+          nix path-info --all --size --human-readable | tail -5 || echo "Could not get store info"
 
   create-release:
     needs: [evaluate, prepare, build-iso]
