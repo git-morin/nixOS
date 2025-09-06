@@ -28,7 +28,9 @@ let
         else throw "inputs.nix not found for host: ${name}"
     ) validHosts;
 
-  nixosConfigurations = builtins.mapAttrs innerLib.buildNixosConfiguration hostConfigs;
+  nixosConfigurations = builtins.mapAttrs
+    (name: hostConfig: innerLib.buildNixosConfiguration name hostConfig)
+    hostConfigs;
 
   hostsWithIsoNames = builtins.filter
     (name: (hostConfigs.${name}).buildIso or false)
