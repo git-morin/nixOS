@@ -26,7 +26,7 @@ on:
         type: boolean
 
 env:
-  HOME: /home/runner
+  HOME: /root
   NIX_CONFIG: |
     experimental-features = nix-command flakes
     max-jobs = auto
@@ -45,12 +45,11 @@ jobs:
     steps:
       - name: 🏠 Set up environment
         run: |
-          echo "HOME=${HOME:-/tmp/runner-home}" >> $GITHUB_ENV
-          echo "USER=${USER:-runner}" >> $GITHUB_ENV
-          mkdir -p "${HOME:-/tmp/runner-home}"
+          echo "HOME=/root" >> $GITHUB_ENV
+          echo "USER=root" >> $GITHUB_ENV
           echo "Environment setup complete:"
-          echo "HOME: ${HOME:-/tmp/runner-home}"
-          echo "USER: ${USER:-runner}"
+          echo "HOME: /root"
+          echo "USER: root"
 
       - name: 🌱 Checkout
         uses: actions/checkout@v4
@@ -63,6 +62,7 @@ jobs:
             max-jobs = 4
             cores = 2
             build-users-group = nixbld
+            trusted-users = root
 
       - name: 🗄️ Cache Nix store (evaluation)
         uses: nix-community/cache-nix-action@v6
@@ -84,7 +84,7 @@ jobs:
         run: |
           echo "=== Showing available configurations ==="
           nix flake show | grep -A 20 nixosConfigurations || true
-                    
+          
           echo "=== Evaluating main configuration ==="
           nix eval --raw .#nixosConfigurations.main.config.system.build.toplevel.drvPath
           echo "✅ Main configuration evaluation successful"
@@ -179,9 +179,8 @@ jobs:
     steps:
       - name: 🏠 Set up environment
         run: |
-          echo "HOME=${HOME:-/tmp/runner-home}" >> $GITHUB_ENV
-          echo "USER=${USER:-runner}" >> $GITHUB_ENV
-          mkdir -p "${HOME:-/tmp/runner-home}"
+          echo "HOME=/root" >> $GITHUB_ENV
+          echo "USER=root" >> $GITHUB_ENV
 
       - name: 🌱 Checkout
         uses: actions/checkout@v4
@@ -206,6 +205,7 @@ jobs:
             cores = 2
             keep-env-derivations = true
             keep-outputs = true
+            trusted-users = root
 
       - name: 🗄️ Cache Nix store (build)
         uses: nix-community/cache-nix-action@v6
