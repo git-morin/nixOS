@@ -21,11 +21,11 @@ let
   hostConfigs = builtins.mapAttrs
     (name: type:
       let
-        inputsPath = ../hosts + "/${name}/inputs.nix";
+        inputsPath = ../hosts + "/${name}/_meta.nix";
       in
         if builtins.pathExists inputsPath
         then (import inputsPath) { inherit inputs; }
-        else throw "inputs.nix not found for host: ${name}"
+        else throw "_meta.nix not found for host: ${name}"
     ) validHosts;
 
   nixosConfigurations = builtins.mapAttrs
