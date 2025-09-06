@@ -69,11 +69,8 @@ jobs:
         with:
           primary-key: nix-eval-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
           restore-prefixes-first-match: nix-eval-${{ runner.os }}-
-          # Garbage collect to keep cache under 10GB limit
           gc-max-store-size: 8000000000  # 8GB
-          # Save cache only if evaluation succeeds
           save: true
-          # Clean up old caches
           purge: true
           purge-created: 7 days
           purge-last-accessed: 3 days
@@ -183,7 +180,6 @@ jobs:
       - name: 🌱 Checkout
         uses: actions/checkout@v4
 
-      # Free up disk space on self-hosted runner if needed
       - name: 🧹 Clean up disk space
         run: |
           # Remove old build artifacts
@@ -214,11 +210,8 @@ jobs:
           restore-prefixes-first-match: |
             nix-build-${{ matrix.host }}-${{ runner.os }}-
             nix-eval-${{ runner.os }}-
-          # More aggressive GC for build jobs to manage space
-          gc-max-store-size-linux: 6442450944  # 6GB
-          # Save cache only for main branch builds, not PRs
+          gc-max-store-size-linux: 6442450944
           save: ${{ github.event_name != 'pull_request' }}
-          # Purge old build caches more frequently
           purge: true
           purge-prefixes: |
             nix-build-${{ matrix.host }}-${{ runner.os }}-
