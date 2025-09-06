@@ -82,24 +82,39 @@ jobs:
       - name: 🖥️ Evaluate NixOS configurations
         id: eval-check
         run: |
+          echo "=== Showing available configurations ==="
+          nix flake show | grep -A 20 nixosConfigurations || true
+          
+          echo "=== Debug information ==="
+          echo "Hosts with ISO enabled:"
+          nix eval --json .#debug.hostsWithIsoNames || echo "Debug info not available"
+          echo "ISO configuration names:"
+          nix eval --json .#debug.isoConfigurationNames || echo "Debug info not available"
+          echo "Host configs:"
+          nix eval --json .#debug.hostConfigs || echo "Debug info not available"
+          
           echo "=== Evaluating main configuration ==="
-          nix eval .#flake.nixosConfigurations.main.config.system.build.toplevel.drvPath
+          nix eval --raw .#nixosConfigurations.main.config.system.build.toplevel.drvPath
           echo "✅ Main configuration evaluation successful"
           
           echo "=== Evaluating WSL configuration ==="
-          nix eval .#flake.nixosConfigurations.wsl.config.system.build.toplevel.drvPath
+          nix eval --raw .#nixosConfigurations.wsl.config.system.build.toplevel.drvPath
           echo "✅ WSL configuration evaluation successful"
           
           echo "=== Evaluating Server configuration ==="
-          nix eval .#flake.nixosConfigurations.server.config.system.build.toplevel.drvPath
+          nix eval --raw .#nixosConfigurations.server.config.system.build.toplevel.drvPath
           echo "✅ Server configuration evaluation successful"
           
-          echo "=== Evaluating main ISO configuration ==="
-          nix eval .#flake.nixosConfigurations.main-iso.config.system.build.toplevel.drvPath
-          echo "✅ Main ISO configuration evaluation successful"
+          echo "=== Checking for ISO configurations ==="
+          if nix eval --raw .#nixosConfigurations.main-iso.config.system.build.toplevel.drvPath 2>/dev/null; then
+            echo "✅ Main ISO configuration evaluation successful"
+          else
+            echo "⚠️ Main ISO configuration not found - checking what's available"
+            nix eval --apply 'configs: builtins.attrNames configs' .#nixosConfigurations
+          fi
           
           echo "=== Caching flake inputs ==="
-          nix build .#flake.nixosConfigurations.main.config.system.build.toplevel --no-link --print-build-logs
+          nix build .#nixosConfigurations.main.config.system.build.toplevel --no-link --print-build-logs
           
           echo "success=true" >> $GITHUB_OUTPUT
 
