@@ -1,4 +1,4 @@
-{ inputs }:
+{ inputs ? null }:
 {
   # Read all .nix files (except default.nix) and import them
   importNixFiles = 
