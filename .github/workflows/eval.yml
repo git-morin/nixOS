@@ -55,16 +55,6 @@ jobs:
       - name: 🌱 Checkout
         uses: actions/checkout@v4
 
-      - name: 🧹 Clean up previous state
-        run: |
-          # Clean up any corrupted Nix state
-          sudo rm -rf /nix/var/nix/db/db.sqlite-wal /nix/var/nix/db/db.sqlite-shm || true
-          sudo systemctl stop nix-daemon || true
-          
-          # Ensure proper permissions
-          sudo chown -R root:nixbld /nix || true
-          sudo chmod -R g+w /nix/store || true
-
       - name: ❄️ Install Nix (quick single-user mode)
         uses: nixbuild/nix-quick-install-action@v30
         with:
@@ -196,14 +186,10 @@ jobs:
       - name: 🌱 Checkout
         uses: actions/checkout@v4
 
-      - name: 🧹 Clean up disk space and state
+      - name: 🧹 Clean up disk space
         run: |
           sudo rm -rf /tmp/nixos-iso-* || true
           sudo rm -rf result* || true
-          
-          # Clean up any corrupted Nix state
-          sudo rm -rf /nix/var/nix/db/db.sqlite-wal /nix/var/nix/db/db.sqlite-shm || true
-          sudo systemctl stop nix-daemon || true
           
           docker system prune -af || true
           docker image prune -af || true
@@ -211,7 +197,7 @@ jobs:
           echo "=== Disk usage before build ==="
           df -h
 
-      - name: ❄️ Install Nix
+      - name: ❄️ Install Nix (quick single-user mode)
         uses: nixbuild/nix-quick-install-action@v30
         with:
           nix_conf: |
@@ -227,11 +213,13 @@ jobs:
           primary-key: nix-build-${{ matrix.host }}-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
           restore-prefixes-first-match: |
             nix-build-${{ matrix.host }}-${{ runner.os }}-
+            nix-eval-${{ runner.os }}-
           gc-max-store-size-linux: 6442450944
           save: ${{ github.event_name != 'pull_request' }}
           purge: true
           purge-prefixes: |
             nix-build-${{ matrix.host }}-${{ runner.os }}-
+            nix-build-*-${{ runner.os }}-
           purge-created: 432000
           purge-last-accessed: 172800
           purge-primary-key: never
