@@ -27,4 +27,30 @@
           else null;
       in
         builtins.filter (p: p != null) (map getPackage packageNames);
+
+  # Generate nixOS configuration from hosts
+  buildNixosConfiguration = hostname: hostConfig:
+    inputs.nixpkgs.lib.nixosSystem {
+      system = hostConfig.system or "x86_64-linux";
+      specialArgs = { inherit inputs; };
+      modules = [
+        ../hosts/${hostname}
+        inputs.home-manager.nixosModules.home-manager
+        (import ./home-manager.nix {
+          inherit inputs;
+          system = hostConfig.system or "x86_64-linux";
+          userList = hostConfig.users or [];
+        })
+      ] ++ (hostConfig.additionalModules or []);
+    };
+
+  # Generate ISO configuration from hosts
+  buildIsoConfiguration = hostname: hostConfig:
+    inputs.nixpkgs.lib.nixosSystem {
+      system = hostConfig.system or "x86_64-linux";
+      specialArgs = { inherit inputs; };
+      modules = [
+        ../iso/${hostname}.nix
+      ];
+    };
 }
