@@ -1,6 +1,6 @@
 { inputs, lib, ... }:
 let
-  innerLib = import ../lib { inherit inputs; };
+  innerLib = (import ../lib).withInputs inputs;
 
   allHosts = builtins.readDir ../hosts;
 
