@@ -198,30 +198,34 @@ jobs:
           df -h
 
       - name: ❄️ Install Nix (quick single-user mode)
-        uses: nixbuild/nix-quick-install-action@v28
+        uses: nixbuild/nix-quick-install-action@v30
         with:
           nix_conf: |
             experimental-features = nix-command flakes
             max-jobs = 4
             cores = 2
-            build-users-group = nixbld
+            keep-env-derivations = true
+            keep-outputs = true
 
       - name: 🗄️ Cache Nix store (build)
-        uses: DeterminateSystems/cache-nix-action@v7
+        uses: nix-community/cache-nix-action@v6
         with:
           primary-key: nix-build-${{ matrix.host }}-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
           restore-prefixes-first-match: |
             nix-build-${{ matrix.host }}-${{ runner.os }}-
             nix-eval-${{ runner.os }}-
-          restore-prefixes-all-matches: |
-            nix-eval-${{ runner.os }}-
-          # Aggressive GC for build jobs to stay under GitHub's 10GB limit
-          gc-max-store-size: 6000000000  # 6GB
+          # More aggressive GC for build jobs to manage space
+          gc-max-store-size-linux: 6442450944  # 6GB
+          # Save cache only for main branch builds, not PRs
           save: ${{ github.event_name != 'pull_request' }}
-          # Purge old caches more aggressively for builds
+          # Purge old build caches more frequently
           purge: true
-          purge-created: 5 days
-          purge-last-accessed: 2 days
+          purge-prefixes: |
+            nix-build-${{ matrix.host }}-${{ runner.os }}-
+            nix-build-*-${{ runner.os }}-
+          purge-created: 432000  # 5 days in seconds
+          purge-last-accessed: 172800  # 2 days in seconds
+          purge-primary-key: never
 
       - name: 🏗️ Build ISO image for ${{ matrix.host }}
         id: build-result
