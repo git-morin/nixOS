@@ -17,5 +17,5 @@ let
       builtins.mapAttrs lib.buildIsoConfiguration hostsWithIsos;
 
 in {
-  flake.nixosConfigurations = nixosConfigurations // isoConfigurations;
+  nixosConfigurations = nixosConfigurations // isoConfigurations;
 }
