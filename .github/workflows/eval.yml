@@ -51,86 +51,71 @@ jobs:
       - name: 🌱 Checkout
         uses: actions/checkout@v4
 
-      - name: 🧹 Nuclear Nix cleanup - Phase 1 (Processes)
+      - name: 🧹 Complete Nix cleanup and reset
         run: |
-          echo "=== Killing all Nix processes ==="
-          sudo pkill -9 -f nix-daemon || true
-          sudo pkill -9 -f nix || true
-          sudo pkill -9 -f nixbld || true
-          sleep 3
+          # Kill all Nix processes
+          sudo pkill -f nix-daemon || true
+          sudo pkill -f nix || true
+          sleep 2
           
-          echo "=== Stopping systemd services ==="
-          sudo systemctl stop nix-daemon.service || true
-          sudo systemctl stop nix-daemon.socket || true
-          sudo systemctl disable nix-daemon.service || true
-          sudo systemctl disable nix-daemon.socket || true
-          sudo systemctl reset-failed || true
-
-      - name: 🧹 Nuclear Nix cleanup - Phase 2 (Filesystem)
-        run: |
-          echo "=== Unmounting any Nix mounts ==="
-          sudo umount -f /nix/store 2>/dev/null || true
-          sudo umount -f /nix 2>/dev/null || true
+          # Stop systemd services
+          sudo systemctl stop nix-daemon || true
+          sudo systemctl disable nix-daemon || true
           
-          echo "=== Removing Nix directories ==="
+          # Complete removal of Nix
           sudo rm -rf /nix || true
           sudo rm -rf /etc/nix || true
-          sudo rm -rf /etc/systemd/system/nix-daemon.* || true
-          sudo rm -rf /etc/systemd/system/multi-user.target.wants/nix-daemon.* || true
-          
-          echo "=== Cleaning user profiles ==="
           sudo rm -rf /root/.nix-* || true
           sudo rm -rf /home/*/.nix-* || true
           sudo rm -rf /tmp/nix-* || true
           
-          echo "=== Cleaning environment ==="
+          # Remove Nix from PATH
+          sudo sed -i '/nix/d' /etc/environment || true
+          sudo sed -i '/nix/d' /etc/profile || true
           sudo rm -rf /etc/profile.d/nix.sh || true
-          sudo sed -i '/nix/d' /etc/environment 2>/dev/null || true
-          sudo sed -i '/nix/d' /etc/profile 2>/dev/null || true
-
-      - name: 🧹 Nuclear Nix cleanup - Phase 3 (Users/Groups)
-        run: |
-          echo "=== Removing Nix users and groups ==="
-          for i in {1..32}; do
-            sudo userdel "nixbld$i" 2>/dev/null || true
-          done
+          
+          # Clean up users and groups
+          sudo userdel nixbld1 2>/dev/null || true
+          sudo userdel nixbld2 2>/dev/null || true
+          sudo userdel nixbld3 2>/dev/null || true
+          sudo userdel nixbld4 2>/dev/null || true
+          sudo userdel nixbld5 2>/dev/null || true
           sudo groupdel nixbld 2>/dev/null || true
           
-          echo "=== Reloading systemd ==="
-          sudo systemctl daemon-reload
-          
-          echo "=== Cleanup complete, waiting for system to settle ==="
-          sleep 5
+          echo "✅ Complete Nix cleanup finished"
 
-      - name: ❄️ Fresh Nix installation with nixbuild action
-        uses: nixbuild/nix-quick-install-action@v30
-        with:
-          nix_conf: |
-            experimental-features = nix-command flakes
-            max-jobs = 4
-            cores = 2
-            build-users-group = nixbld
-            trusted-users = root runner
-
-      - name: 🔧 Verify and configure Nix
+      - name: ❄️ Fresh Nix installation
         run: |
-          echo "=== Testing Nix installation ==="
+          # Download and install Nix with single-user mode
+          curl -L https://nixos.org/nix/install | sh -s -- --daemon --yes
+          
+          # Source Nix environment
+          . /home/runner/.nix-profile/etc/profile.d/nix.sh
+          
+          # Configure Nix
+          mkdir -p ~/.config/nix
+          cat > ~/.config/nix/nix.conf << EOF
+          experimental-features = nix-command flakes
+          max-jobs = 4
+          cores = 2
+          trusted-users = root runner
+          EOF
+          
+          # Test Nix installation
           nix --version
-          nix-daemon --version || true
           
-          echo "=== Nix store status ==="
-          nix store ping || echo "Store ping failed"
-          
-          echo "=== Configuration check ==="
-          nix show-config | head -10
+          echo "✅ Fresh Nix installation complete"
 
       - name: 🧪 Show available outputs
         run: |
+          . /home/runner/.nix-profile/etc/profile.d/nix.sh
           nix flake show
 
       - name: 🖥️ Evaluate NixOS configurations
         id: eval-check
         run: |
+          . /home/runner/.nix-profile/etc/profile.d/nix.sh
+          
           echo "=== Showing available configurations ==="
           nix flake show | grep -A 20 nixosConfigurations || true
                     
@@ -158,13 +143,15 @@ jobs:
 
       - name: 🔍 Additional validation
         run: |
+          . /home/runner/.nix-profile/etc/profile.d/nix.sh
           nix flake check --no-build || echo "Flake check found issues (this is expected for evaluation-only)"
           nix flake metadata
 
       - name: 📊 Show store usage
         run: |
           df -h /nix 2>/dev/null || echo "Could not check /nix filesystem"
-          nix path-info --all --size --human-readable | tail -10 || echo "Could not get store info"
+          . /home/runner/.nix-profile/etc/profile.d/nix.sh
+          nix path-info --all --size --human-readable | tail -10
 
   prepare:
     needs: evaluate
@@ -243,13 +230,13 @@ jobs:
           echo "=== Disk usage before build ==="
           df -h
 
-      - name: 🔧 Verify Nix is ready
+      - name: ❄️ Use existing Nix installation
         run: |
-          echo "=== Testing Nix installation ==="
-          nix --version
-          nix store ping
+          # Source Nix environment from evaluation job
+          . /home/runner/.nix-profile/etc/profile.d/nix.sh
           
-          echo "=== Quick flake test ==="
+          # Verify Nix is working
+          nix --version
           nix flake show --json > /dev/null
           
           echo "✅ Nix is ready for building"
@@ -257,6 +244,8 @@ jobs:
       - name: 🏗️ Build ISO image for ${{ matrix.host }}
         id: build-result
         run: |
+          . /home/runner/.nix-profile/etc/profile.d/nix.sh
+          
           echo "=== Pre-evaluating ISO configuration ==="
           nix eval --raw .#nixosConfigurations.${{ matrix.host }}-iso.config.system.build.toplevel.drvPath
           
@@ -265,7 +254,6 @@ jobs:
             --extra-experimental-features "nix-command flakes" \
             --max-jobs 4 \
             --cores 2 \
-            --keep-going \
             || (echo "❌ ISO build failed for ${{ matrix.host }}" && exit 1)
           
           echo "success=true" >> $GITHUB_OUTPUT
@@ -325,6 +313,7 @@ jobs:
           echo "=== Final disk usage ==="
           df -h
           
+          . /home/runner/.nix-profile/etc/profile.d/nix.sh
           echo "=== Nix store info ==="
           nix path-info --all --size --human-readable | tail -5 || echo "Could not get store info"
 
