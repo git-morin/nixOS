@@ -1,11 +1,13 @@
-{ inputs, ... }:
+{ inputs, lib, ... }:
 let
-  lib = import ../lib { inherit inputs; };
+  innerLib = import ../lib { inherit inputs; };
 
-  validHosts = builtins.filterAttrs
-    (name: type:
-      type == "directory" && name != "common"
-    ) builtins.readDir ../hosts;
+  allHosts = builtins.readDir ../hosts;
+  filterHost = name:
+    let
+      hostType = allHosts.${name};
+    in
+      hostType == "directory" && name != "common";
 
   hostConfigs = builtins.mapAttrs
     (name: type:
@@ -15,17 +17,21 @@ let
         if builtins.pathExists inputsPath
         then import inputsPath
         else throw "inputs.nix not found for host: ${name}"
-    ) validHosts;
+    ) builtins.listToAttrs
+          (map (name: {
+            inherit name;
+            value = allHosts.${name};
+          }) builtins.filter filterHost builtins.attrNames allHosts);
 
-  nixosConfigurations = builtins.mapAttrs lib.buildNixosConfiguration hostConfigs;
+  nixosConfigurations = builtins.mapAttrs innerLib.buildNixosConfiguration hostConfigs;
 
-  isoConfigurations =
-    let
-      hostsWithIsos = builtins.filterAttrs
-        (name: config: config.buildIso or false)
-        hostConfigs;
-    in
-      builtins.mapAttrs lib.buildIsoConfiguration hostsWithIsos;
+  isoConfigurations = builtins.listToAttrs
+      (map (name: {
+        name = "${name}-iso";
+        value = innerLib.buildIsoConfiguration name hostConfigs.${name};
+      }) (builtins.filter
+          (name: (hostConfigs.${name}).buildIso or false)
+          (builtins.attrNames hostConfigs)));
 
 in {
   # flake-parts
