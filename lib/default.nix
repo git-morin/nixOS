@@ -1,3 +1,4 @@
+{ inputs }:
 {
   # Read all .nix files (except default.nix) and import them
   importNixFiles = 
@@ -50,7 +51,7 @@
       system = hostConfig.system or "x86_64-linux";
       specialArgs = { inherit inputs; };
       modules = [
-        ../iso/${actualHostName}.nix
+        ../iso/${hostname}.nix
       ];
     };
 }
