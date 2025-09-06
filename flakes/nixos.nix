@@ -43,8 +43,5 @@ let
     }) hostsWithIsoNames);
 
 in {
-  # flake-parts
   flake.nixosConfigurations = nixosConfigurations // isoConfigurations;
-  # used for eval during CI
-  nixosConfigurations = nixosConfigurations // isoConfigurations;
 }
