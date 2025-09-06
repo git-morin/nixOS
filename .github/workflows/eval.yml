@@ -31,7 +31,6 @@ env:
     experimental-features = nix-command flakes
     max-jobs = auto
     cores = 0
-    build-users-group = nixbld
 
 permissions:
   contents: write
@@ -48,50 +47,75 @@ jobs:
           echo "HOME=${HOME:-/tmp/runner-home}" >> $GITHUB_ENV
           echo "USER=${USER:-runner}" >> $GITHUB_ENV
           mkdir -p "${HOME:-/tmp/runner-home}"
-          echo "Environment setup complete:"
-          echo "HOME: ${HOME:-/tmp/runner-home}"
-          echo "USER: ${USER:-runner}"
 
       - name: 🌱 Checkout
         uses: actions/checkout@v4
 
-      - name: 🧹 Clean up previous state
+      - name: 🧹 Complete Nix cleanup and reset
         run: |
-          # Clean up any corrupted Nix state
-          sudo rm -rf /nix/var/nix/db/db.sqlite-wal /nix/var/nix/db/db.sqlite-shm || true
-          sudo systemctl stop nix-daemon || true
+          # Kill all Nix processes
+          sudo pkill -f nix-daemon || true
+          sudo pkill -f nix || true
+          sleep 2
           
-          # Ensure proper permissions
-          sudo chown -R root:nixbld /nix || true
-          sudo chmod -R g+w /nix/store || true
+          # Stop systemd services
+          sudo systemctl stop nix-daemon || true
+          sudo systemctl disable nix-daemon || true
+          
+          # Complete removal of Nix
+          sudo rm -rf /nix || true
+          sudo rm -rf /etc/nix || true
+          sudo rm -rf /root/.nix-* || true
+          sudo rm -rf /home/*/.nix-* || true
+          sudo rm -rf /tmp/nix-* || true
+          
+          # Remove Nix from PATH
+          sudo sed -i '/nix/d' /etc/environment || true
+          sudo sed -i '/nix/d' /etc/profile || true
+          sudo rm -rf /etc/profile.d/nix.sh || true
+          
+          # Clean up users and groups
+          sudo userdel nixbld1 2>/dev/null || true
+          sudo userdel nixbld2 2>/dev/null || true
+          sudo userdel nixbld3 2>/dev/null || true
+          sudo userdel nixbld4 2>/dev/null || true
+          sudo userdel nixbld5 2>/dev/null || true
+          sudo groupdel nixbld 2>/dev/null || true
+          
+          echo "✅ Complete Nix cleanup finished"
 
-      - name: ❄️ Install Nix (quick single-user mode)
-        uses: nixbuild/nix-quick-install-action@v30
-        with:
-          nix_conf: |
-            experimental-features = nix-command flakes
-            max-jobs = 4
-            cores = 2
-            build-users-group = nixbld
-
-      - name: 🗄️ Cache Nix store (evaluation)
-        uses: nix-community/cache-nix-action@v6
-        with:
-          primary-key: nix-eval-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
-          restore-prefixes-first-match: nix-eval-${{ runner.os }}-
-          gc-max-store-size: 8000000000
-          save: true
-          purge: true
-          purge-created: 7 days
-          purge-last-accessed: 3 days
+      - name: ❄️ Fresh Nix installation
+        run: |
+          # Download and install Nix with single-user mode
+          curl -L https://nixos.org/nix/install | sh -s -- --daemon --yes
+          
+          # Source Nix environment
+          . /home/runner/.nix-profile/etc/profile.d/nix.sh
+          
+          # Configure Nix
+          mkdir -p ~/.config/nix
+          cat > ~/.config/nix/nix.conf << EOF
+          experimental-features = nix-command flakes
+          max-jobs = 4
+          cores = 2
+          trusted-users = root runner
+          EOF
+          
+          # Test Nix installation
+          nix --version
+          
+          echo "✅ Fresh Nix installation complete"
 
       - name: 🧪 Show available outputs
         run: |
+          . /home/runner/.nix-profile/etc/profile.d/nix.sh
           nix flake show
 
       - name: 🖥️ Evaluate NixOS configurations
         id: eval-check
         run: |
+          . /home/runner/.nix-profile/etc/profile.d/nix.sh
+          
           echo "=== Showing available configurations ==="
           nix flake show | grep -A 20 nixosConfigurations || true
                     
@@ -115,19 +139,18 @@ jobs:
             nix eval --apply 'configs: builtins.attrNames configs' .#nixosConfigurations
           fi
           
-          echo "=== Caching flake inputs ==="
-          nix build .#nixosConfigurations.main.config.system.build.toplevel --no-link --print-build-logs
-          
           echo "success=true" >> $GITHUB_OUTPUT
 
       - name: 🔍 Additional validation
         run: |
+          . /home/runner/.nix-profile/etc/profile.d/nix.sh
           nix flake check --no-build || echo "Flake check found issues (this is expected for evaluation-only)"
           nix flake metadata
 
       - name: 📊 Show store usage
         run: |
           df -h /nix 2>/dev/null || echo "Could not check /nix filesystem"
+          . /home/runner/.nix-profile/etc/profile.d/nix.sh
           nix path-info --all --size --human-readable | tail -10
 
   prepare:
@@ -196,14 +219,10 @@ jobs:
       - name: 🌱 Checkout
         uses: actions/checkout@v4
 
-      - name: 🧹 Clean up disk space and state
+      - name: 🧹 Clean up build artifacts
         run: |
           sudo rm -rf /tmp/nixos-iso-* || true
           sudo rm -rf result* || true
-          
-          # Clean up any corrupted Nix state
-          sudo rm -rf /nix/var/nix/db/db.sqlite-wal /nix/var/nix/db/db.sqlite-shm || true
-          sudo systemctl stop nix-daemon || true
           
           docker system prune -af || true
           docker image prune -af || true
@@ -211,34 +230,22 @@ jobs:
           echo "=== Disk usage before build ==="
           df -h
 
-      - name: ❄️ Install Nix
-        uses: nixbuild/nix-quick-install-action@v30
-        with:
-          nix_conf: |
-            experimental-features = nix-command flakes
-            max-jobs = 4
-            cores = 2
-            keep-env-derivations = true
-            keep-outputs = true
-
-      - name: 🗄️ Cache Nix store (build)
-        uses: nix-community/cache-nix-action@v6
-        with:
-          primary-key: nix-build-${{ matrix.host }}-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
-          restore-prefixes-first-match: |
-            nix-build-${{ matrix.host }}-${{ runner.os }}-
-          gc-max-store-size-linux: 6442450944
-          save: ${{ github.event_name != 'pull_request' }}
-          purge: true
-          purge-prefixes: |
-            nix-build-${{ matrix.host }}-${{ runner.os }}-
-          purge-created: 432000
-          purge-last-accessed: 172800
-          purge-primary-key: never
+      - name: ❄️ Use existing Nix installation
+        run: |
+          # Source Nix environment from evaluation job
+          . /home/runner/.nix-profile/etc/profile.d/nix.sh
+          
+          # Verify Nix is working
+          nix --version
+          nix flake show --json > /dev/null
+          
+          echo "✅ Nix is ready for building"
 
       - name: 🏗️ Build ISO image for ${{ matrix.host }}
         id: build-result
         run: |
+          . /home/runner/.nix-profile/etc/profile.d/nix.sh
+          
           echo "=== Pre-evaluating ISO configuration ==="
           nix eval --raw .#nixosConfigurations.${{ matrix.host }}-iso.config.system.build.toplevel.drvPath
           
@@ -306,6 +313,7 @@ jobs:
           echo "=== Final disk usage ==="
           df -h
           
+          . /home/runner/.nix-profile/etc/profile.d/nix.sh
           echo "=== Nix store info ==="
           nix path-info --all --size --human-readable | tail -5 || echo "Could not get store info"
 
