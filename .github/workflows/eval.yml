@@ -12,7 +12,7 @@ on:
       hosts:
         description: 'Hosts to build a ISO from (comma-separated or "all")'
         required: false
-        default: 'main,proxmox'
+        default: 'main,server'
         type: string
       upload_artifacts:
         description: 'Upload ISO artifacts'
@@ -139,17 +139,13 @@ jobs:
           nix eval .#nixosConfigurations.wsl.config.system.build.toplevel.drvPath
           echo "✅ WSL configuration evaluation successful"
           
-          echo "=== Evaluating Proxmox configuration ==="
-          nix eval .#nixosConfigurations.proxmox.config.system.build.toplevel.drvPath
-          echo "✅ Proxmox configuration evaluation successful"
+          echo "=== Evaluating Server configuration ==="
+          nix eval .#nixosConfigurations.server.config.system.build.toplevel.drvPath
+          echo "✅ Server configuration evaluation successful"
           
           echo "=== Evaluating main ISO configuration ==="
           nix eval .#nixosConfigurations.main-iso.config.system.build.toplevel.drvPath
           echo "✅ Main ISO configuration evaluation successful"
-          
-          echo "=== Evaluating proxmox ISO configuration ==="
-          nix eval .#nixosConfigurations.proxmox-iso.config.system.build.toplevel.drvPath
-          echo "✅ Proxmox ISO configuration evaluation successful"
           
           echo "success=true" >> $GITHUB_OUTPUT
 
@@ -186,7 +182,7 @@ jobs:
           fi
           
           if [[ "$INPUT_HOSTS" == "all" ]]; then
-            HOSTS="main,proxmox"
+            HOSTS="main,server"
           else
             HOSTS="$INPUT_HOSTS"
           fi

@@ -1,58 +1,21 @@
 { inputs, ... }:
 let
-  nixosConfigurations = system: config:
-    builtins.mapAttrs
-      (hostname: userList:
-        inputs.nixpkgs.lib.nixosSystem {
-          inherit system;
-          specialArgs = { inherit inputs; };
-          modules = [
-            ../hosts/${hostname}
-            inputs.home-manager.nixosModules.home-manager
-            (import ./home-manager.nix { inherit inputs system userList; })
-          ] ++ (if config == "wsl" then [
-            inputs.nixos-wsl.nixosModules.wsl
-          ] else if config == "proxmox" then [
-            inputs.proxmox-nixos.nixosModules.proxmox-ve
-            ({ ... }: {
-              nixpkgs.overlays = [
-                inputs.proxmox-nixos.overlays.${system}
-              ];
-            })
-          ] else [
-            inputs.minegrub-theme.nixosModules.default
-            "${inputs.nixpkgs}/nixos/modules/virtualisation/qemu-vm.nix"
-          ]);
-        }
-      );
+  lib = import ../../lib;
 
-isoConfigurations = system:
-  let
-    hostsWithIsos = {
-      main-iso = "main";
-      proxmox-iso = "proxmox";
-    };
-  in
-    builtins.mapAttrs
-      (isoName: hostName:
-        inputs.nixpkgs.lib.nixosSystem {
-          inherit system;
-          specialArgs = { inherit inputs; };
-          modules = [
-            ../iso/${hostName}.nix
-          ];
-        }
-      ) hostsWithIsos;
+  hostConfigs = builtins.mapAttrs
+    (name: type: import ../hosts/${name}/inputs.nix)
+    (builtins.filterAttrs (name: type: name != "common") (builtins.readDir ../hosts));
+
+  nixosConfigurations = builtins.mapAttrs lib.buildNixosConfiguration hostConfigs;
+
+  isoConfigurations =
+    let
+      hostsWithIsos = builtins.filterAttrs
+        (name: config: config.buildIso or false)
+        hostConfigs;
+    in
+      builtins.mapAttrs lib.buildIsoConfiguration hostsWithIsos;
+
 in {
-  flake.nixosConfigurations =
-    (nixosConfigurations "x86_64-linux" "default" {
-      main = [ "graphical" ];
-    }) //
-    (nixosConfigurations "x86_64-linux" "wsl" {
-      wsl = [ "terminal" ];
-    }) //
-    (nixosConfigurations "x86_64-linux" "proxmox" {
-      proxmox = [ "terminal" ];
-    }) //
-    (isoConfigurations "x86_64-linux");
+  flake.nixosConfigurations = nixosConfigurations // isoConfigurations;
 }

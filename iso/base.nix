@@ -56,10 +56,8 @@
         echo "NixOS Installer Script"
         echo "======================"
         echo ""
-        echo "This ISO contains the following configurations:"
+        echo "This ISO contains the following configuration:"
         echo "- main: Desktop/workstation configuration"
-        echo "- wsl: Windows Subsystem for Linux configuration"  
-        echo "- proxmox: Proxmox VE server configuration"
         echo ""
         echo "To install a specific configuration:"
         echo "1. Partition your disks (use 'fdisk' or 'parted')"
@@ -67,9 +65,8 @@
         echo "3. Mount your root partition (e.g., 'mount /dev/sda1 /mnt')"
         echo "4. Generate hardware config: 'nixos-generate-config --root /mnt'"
         echo "5. Copy this config: 'cp -r /etc/nixos-config /mnt/etc/nixos/'"
-        echo "6. Install: 'nixos-install --flake /mnt/etc/nixos-config#<HOST>'"
+        echo "6. Install: 'nixos-install --flake /mnt/etc/nixos-config#main"
         echo ""
-        echo "Available hosts: main, wsl, proxmox"
       '';
       mode = "0755";
     };
