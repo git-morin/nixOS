@@ -31,7 +31,6 @@ env:
     experimental-features = nix-command flakes
     max-jobs = auto
     cores = 0
-    build-users-group = nixbld
 
 permissions:
   contents: write
@@ -61,7 +60,6 @@ jobs:
             experimental-features = nix-command flakes
             max-jobs = 4
             cores = 2
-            build-users-group = nixbld
             trusted-users = root
 
       - name: 🗄️ Cache Nix store (evaluation)
