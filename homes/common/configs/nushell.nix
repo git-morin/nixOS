@@ -9,6 +9,8 @@
             clean    = "nh clean all";  # clean up old generations
             upgrade  = "sudo nix-env --upgrade";  # upgrade packages
             optimize = "sudo nix-store --optimize"; # optimize nix-store
+
+            whoami   = "coreutils --coreutils-prog=whoami"; # fix 'whoami' built-in which might be missing
         };
     };
 
