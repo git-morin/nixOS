@@ -1,9 +1,5 @@
 { inputs, ... }:
 {
-  imports = [
-    inputs.emanote.flakeModule
-  ];
-
   emanote.sites = {
     docs = {
       layers = [
