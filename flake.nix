@@ -32,6 +32,9 @@
       url = "github:nix-community/nixos-anywhere";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    emanote = {
+      url = "github:srid/emanote";
+    };
   };
 
   outputs = {
@@ -44,6 +47,7 @@
     proxmox-nixos,
     disko,
     nixos-anywhere,
+    emanote,
     ...
   }@inputs:
     flake-parts.lib.mkFlake { inherit inputs; } {
