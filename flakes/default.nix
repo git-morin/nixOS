@@ -1,3 +1,6 @@
+let
+  lib = import ../lib;
+in
 {
-  imports = [ ./nixos.nix ];
+  imports = lib.importNixFiles ./.;
 }
