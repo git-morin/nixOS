@@ -1,0 +1,19 @@
+page:
+  siteTitle: Gab's Stuff He Be Doing
+  #siteName: TODO
+  #siteUrl: TODO
+
+template:
+  uptree:
+    enable: true
+  sidebar:
+    enable: false
+  toc:
+    enable: false
+  breadcrumbs:
+    enable: true
+  theme: orange
+  editBaseUrl: https://github.com/git-morin/nixOS/wiki
+  base:
+    bodyClass: overflow-y-scroll bg-gray-400
+    containerClass: container mx-auto max-w-screen-lg
