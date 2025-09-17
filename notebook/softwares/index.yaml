@@ -1,0 +1,13 @@
+template:
+  uptree:
+    enable: true
+  sidebar:
+    enable: true
+  toc:
+    enable: true
+  breadcrumbs:
+    enable: true
+  theme: orange
+  base:
+    bodyClass: overflow-y-scroll bg-gray-400
+    containerClass: container mx-auto max-w-screen-lg

@@ -1,4 +1,4 @@
-name: Build and Publish NixOS ISO Images
+name: Build and Publish
 
 on:
   push:
@@ -10,9 +10,9 @@ on:
   workflow_dispatch:
     inputs:
       hosts:
-        description: 'Hosts to build a ISO from (comma-separated or "all")'
+        description: 'Hosts to build a ISO from'
         required: false
-        default: 'main,server'
+        default: ''
         type: string
       upload_artifacts:
         description: 'Upload ISO artifacts'

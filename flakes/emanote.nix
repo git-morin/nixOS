@@ -6,9 +6,9 @@
 
   perSystem = {
     emanote.sites = {
-      wiki = {
+      notebook = {
         layers = [
-          { path = ./wiki; pathString = "./wiki"; }
+          { path = ./notebook; pathString = "./notebook"; }
         ];
       };
     };
