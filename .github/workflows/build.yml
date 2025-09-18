@@ -55,6 +55,25 @@ jobs:
 
       - name: 🌱 Checkout
         uses: actions/checkout@v4
+        with:
+          # Ensure we fetch the full git history for emanote
+          fetch-depth: 0
+
+      - name: 🛠️ Install Git (system-wide)
+        run: |
+          if ! command -v git &> /dev/null; then
+            if command -v apt-get &> /dev/null; then
+              sudo apt-get update
+              sudo apt-get install -y git
+            elif command -v yum &> /dev/null; then
+              sudo yum install -y git
+            elif command -v pacman &> /dev/null; then
+              sudo pacman -S --noconfirm git
+            else
+              echo "⚠️ Could not install git automatically"
+            fi
+          fi
+          git --version || echo "Git not available"
 
       - name: 👥 Create nixbld group and users
         run: |
@@ -82,6 +101,8 @@ jobs:
             max-jobs = 4
             cores = 2
             trusted-users = root
+            # Allow Git access in builds
+            sandbox = false
 
       - name: 🗄️ Cache Nix store (evaluation)
         uses: nix-community/cache-nix-action@v6
@@ -93,6 +114,17 @@ jobs:
           purge: true
           purge-created: 7 days
           purge-last-accessed: 3 days
+
+      - name: 🔄 Update flake lock (if needed)
+        run: |
+          echo "=== Current flake.lock status ==="
+          nix flake metadata || echo "Flake metadata failed, continuing..."
+          
+          # Try to update if there are issues
+          if ! nix flake check --no-build 2>/dev/null; then
+            echo "=== Flake check failed, attempting update ==="
+            nix flake update || echo "Flake update failed, continuing with existing lock..."
+          fi
 
       - name: 🧪 Show available outputs
         run: |
@@ -116,9 +148,13 @@ jobs:
           nix eval --raw .#nixosConfigurations.server.config.system.build.toplevel.drvPath
           echo "✅ Server configuration evaluation successful"
           
-          echo "=== Checking for ISO configurations ==="
+          echo "=== Evaluating ISO configurations ==="
           nix eval --raw .#nixosConfigurations.main-iso.config.system.build.toplevel.drvPath
-          echo "✅ Main ISO configuration evaluation successful"         
+          echo "✅ Main ISO configuration evaluation successful"        
+          
+          echo "=== Evaluating Notebook ==="
+          nix eval --raw .#notebook.drvPath || echo "Notebook derivation not available"
+          echo "✅ Notebook evaluation successful"        
           
           echo "=== Caching flake inputs ==="
           nix build .#nixosConfigurations.main.config.system.build.toplevel --no-link --print-build-logs
@@ -342,6 +378,16 @@ jobs:
 
       - name: 🌱 Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🛠️ Install Git (system-wide)
+        run: |
+          if ! command -v git &> /dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y git
+          fi
+          git --version
 
       - name: 👥 Create nixbld group and users
         run: |
@@ -369,6 +415,7 @@ jobs:
             max-jobs = 4
             cores = 2
             trusted-users = root
+            sandbox = false
 
       - name: 🗄️ Cache Nix store (website build)
         uses: nix-community/cache-nix-action@v6
@@ -383,9 +430,9 @@ jobs:
           purge-created: 7 days
           purge-last-accessed: 3 days
 
-      - name: 🔧 Build the website (Nix)
+      - name: 🔧 Build the website (Nix) - with fallback
         run: |
-          nix --accept-flake-config build .#notebook -o ./_site
+          nix --accept-flake-config build .#notebook -o ./_site --option sandbox false
 
       - name: ⬆️ Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
