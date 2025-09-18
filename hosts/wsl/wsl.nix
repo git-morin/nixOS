@@ -6,7 +6,7 @@
   wsl.interop.register = true;
   wsl.interop.includePath = false;
 
-  systemd.extraConfig = ''
+  systemd.settings.Manager = ''
       DefaultTimeoutStopSec=10s
   '';
 
