@@ -117,12 +117,8 @@ jobs:
           echo "✅ Server configuration evaluation successful"
           
           echo "=== Checking for ISO configurations ==="
-          if nix eval --raw .#nixosConfigurations.main-iso.config.system.build.toplevel.drvPath 2>/dev/null; then
-            echo "✅ Main ISO configuration evaluation successful"
-          else
-            echo "⚠️ Main ISO configuration not found - checking what's available"
-            nix eval --apply 'configs: builtins.attrNames configs' .#nixosConfigurations
-          fi
+          nix eval --raw .#nixosConfigurations.main-iso.config.system.build.toplevel.drvPath
+          echo "✅ Main ISO configuration evaluation successful"         
           
           echo "=== Caching flake inputs ==="
           nix build .#nixosConfigurations.main.config.system.build.toplevel --no-link --print-build-logs
