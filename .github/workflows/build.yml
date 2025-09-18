@@ -1,5 +1,4 @@
 name: Build and Publish
-
 on:
   push:
     branches:
@@ -33,8 +32,12 @@ env:
     cores = 0
 
 permissions:
-  contents: write
-  packages: read
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   evaluate:
@@ -330,6 +333,78 @@ jobs:
           
           echo "=== Nix store info ==="
           nix path-info --all --size --human-readable | tail -5 || echo "Could not get store info"
+
+  build-website:
+    needs: evaluate
+    runs-on: self-hosted
+    if: needs.evaluate.outputs.eval-success == 'true'
+    steps:
+      - name: 🏠 Set up environment
+        run: |
+          echo "HOME=/root" >> $GITHUB_ENV
+          echo "USER=root" >> $GITHUB_ENV
+
+      - name: 🌱 Checkout
+        uses: actions/checkout@v4
+
+      - name: 👥 Create nixbld group and users
+        run: |
+          if ! getent group nixbld >/dev/null; then
+            sudo groupadd -r nixbld
+            echo "✅ Created nixbld group"
+          else
+            echo "✅ nixbld group already exists"
+          fi
+          
+          for i in $(seq 1 10); do
+            if ! getent passwd nixbld$i >/dev/null; then
+              sudo useradd -r -g nixbld -G nixbld -d /var/empty -s /sbin/nologin -c "Nix build user $i" nixbld$i
+              echo "✅ Created nixbld$i user"
+            else
+              echo "✅ nixbld$i user already exists"
+            fi
+          done
+
+      - name: ❄️ Install Nix (quick single-user mode)
+        uses: nixbuild/nix-quick-install-action@v30
+        with:
+          nix_conf: |
+            experimental-features = nix-command flakes
+            max-jobs = 4
+            cores = 2
+            trusted-users = root
+
+      - name: 🗄️ Cache Nix store (website build)
+        uses: nix-community/cache-nix-action@v6
+        with:
+          primary-key: nix-website-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
+          restore-prefixes-first-match: |
+            nix-website-${{ runner.os }}-
+            nix-eval-${{ runner.os }}-
+          gc-max-store-size: 4000000000
+          save: ${{ github.event_name != 'pull_request' }}
+          purge: true
+          purge-created: 7 days
+          purge-last-accessed: 3 days
+
+      - name: 🔧 Build the website (Nix)
+        run: |
+          nix --accept-flake-config build .#notebook -o ./_site
+
+      - name: ⬆️ Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+
+  deploy-pages:
+    needs: build-website
+    runs-on: self-hosted
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 🚀 Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 
   create-release:
     needs: [evaluate, prepare, build-iso]
