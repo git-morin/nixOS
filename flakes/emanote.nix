@@ -8,7 +8,7 @@
     emanote.sites = {
       notebook = {
         layers = [
-          { path = ./notebook; pathString = "./notebook"; }
+          { path = ../notebook; pathString = "../notebook"; }
         ];
       };
     };
