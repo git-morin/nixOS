@@ -2,10 +2,10 @@
 
 let
   proxmoxConfig = import ../hosts/server/proxmox.nix;
-  proxmoxIP = proxmoxConfig.services.proxmox-ve.ipAddress or (builtins.throw "Missing required configuration: services.proxmox-ve.ipAddress");
+#  proxmoxIP = proxmoxConfig.services.proxmox-ve.ipAddress or (builtins.throw "Missing required configuration: services.proxmox-ve.ipAddress");
 in
 {
-  _module.args.proxmoxIP = "192.168.2.55";
+#  _module.args.proxmoxIP = "192.168.2.55";
   imports = [
     ./base.nix
     ../hosts/common/iso
