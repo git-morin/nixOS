@@ -115,17 +115,6 @@ jobs:
           purge-created: 7 days
           purge-last-accessed: 3 days
 
-      - name: 🔄 Update flake lock (if needed)
-        run: |
-          echo "=== Current flake.lock status ==="
-          nix flake metadata || echo "Flake metadata failed, continuing..."
-          
-          # Try to update if there are issues
-          if ! nix flake check --no-build 2>/dev/null; then
-            echo "=== Flake check failed, attempting update ==="
-            nix flake update || echo "Flake update failed, continuing with existing lock..."
-          fi
-
       - name: 🧪 Show available outputs
         run: |
           nix flake show
