@@ -7,6 +7,6 @@ let
 in
 {
   imports = [
-    inputs.nixvim.homeModules.nixvim
+    inputs.nixvim.homeManagerModules.nixvim
   ] ++ map wrapForUseAsNixvimConfig (lib.importNixFiles ./nixvim);
 }
