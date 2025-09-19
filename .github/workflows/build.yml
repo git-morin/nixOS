@@ -40,10 +40,12 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  evaluate:
+  setup:
     runs-on: self-hosted
     outputs:
       eval-success: ${{ steps.eval-check.outputs.success }}
+      cache-hit: ${{ steps.cache.outputs.cache-hit }}
+      cache-key: ${{ steps.cache-key.outputs.key }}
     steps:
       - name: 🏠 Set up environment
         run: |
@@ -56,24 +58,14 @@ jobs:
       - name: 🌱 Checkout
         uses: actions/checkout@v4
         with:
-          # Ensure we fetch the full git history for emanote
           fetch-depth: 0
 
-      - name: 🛠️ Install Git (system-wide)
+      - name: 🛠️ Install Dependencies
         run: |
           if ! command -v git &> /dev/null; then
-            if command -v apt-get &> /dev/null; then
-              sudo apt-get update
-              sudo apt-get install -y git
-            elif command -v yum &> /dev/null; then
-              sudo yum install -y git
-            elif command -v pacman &> /dev/null; then
-              sudo pacman -S --noconfirm git
-            else
-              echo "⚠️ Could not install git automatically"
-            fi
+            sudo apt-get update
+            sudo apt-get install -y git
           fi
-          git --version || echo "Git not available"
 
       - name: 👥 Create nixbld group and users
         run: |
@@ -93,7 +85,7 @@ jobs:
             fi
           done
 
-      - name: ❄️ Install Nix (quick single-user mode)
+      - name: ❄️ Install Nix
         uses: nixbuild/nix-quick-install-action@v30
         with:
           nix_conf: |
@@ -101,14 +93,21 @@ jobs:
             max-jobs = 4
             cores = 2
             trusted-users = root
-            # Allow Git access in builds
             sandbox = false
 
-      - name: 🗄️ Cache Nix store (evaluation)
+      - name: 🔑 Generate cache key
+        id: cache-key
+        run: |
+          CACHE_KEY="nix-store-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}"
+          echo "key=$CACHE_KEY" >> $GITHUB_OUTPUT
+          echo "Generated cache key: $CACHE_KEY"
+
+      - name: 🗄️ Restore Nix store cache
+        id: cache
         uses: nix-community/cache-nix-action@v6
         with:
-          primary-key: nix-eval-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
-          restore-prefixes-first-match: nix-eval-${{ runner.os }}-
+          primary-key: ${{ steps.cache-key.outputs.key }}
+          restore-prefixes-first-match: nix-store-${{ runner.os }}-
           gc-max-store-size: 8000000000
           save: true
           purge: true
@@ -145,25 +144,24 @@ jobs:
           nix eval --raw .#notebook.drvPath || echo "Notebook derivation not available"
           echo "✅ Notebook evaluation successful"        
           
-          echo "=== Caching flake inputs ==="
           nix build .#nixosConfigurations.main.config.system.build.toplevel --no-link --print-build-logs
           
           echo "success=true" >> $GITHUB_OUTPUT
 
       - name: 🔍 Additional validation
         run: |
-          nix flake check --no-build || echo "Flake check found issues (this is expected for evaluation-only)"
+          nix flake check --no-build
           nix flake metadata
 
       - name: 📊 Show store usage
         run: |
-          df -h /nix 2>/dev/null || echo "Could not check /nix filesystem"
+          df -h /nix 2>/dev/null
           nix path-info --all --size --human-readable | tail -10
 
   prepare:
-    needs: evaluate
+    needs: setup
     runs-on: self-hosted
-    if: needs.evaluate.outputs.eval-success == 'true'
+    if: needs.setup.outputs.eval-success == 'true'
     outputs:
       hosts: ${{ steps.set-hosts.outputs.hosts }}
       matrix: ${{ steps.set-matrix.outputs.matrix }}
@@ -204,9 +202,9 @@ jobs:
           fi
 
   build-iso:
-    needs: [evaluate, prepare]
+    needs: [setup, prepare]
     runs-on: self-hosted
-    if: needs.evaluate.outputs.eval-success == 'true' && needs.prepare.outputs.hosts != ''
+    if: needs.setup.outputs.eval-success == 'true' && needs.prepare.outputs.hosts != ''
     strategy:
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
       fail-fast: false
@@ -229,11 +227,8 @@ jobs:
         run: |
           sudo rm -rf /tmp/nixos-iso-* || true
           sudo rm -rf result* || true
-          
           docker system prune -af || true
           docker image prune -af || true
-          
-          echo "=== Disk usage before build ==="
           df -h
 
       - name: 👥 Create nixbld group and users
@@ -254,7 +249,7 @@ jobs:
             fi
           done
 
-      - name: ❄️ Install Nix (quick single-user mode)
+      - name: ❄️ Install Nix
         uses: nixbuild/nix-quick-install-action@v30
         with:
           nix_conf: |
@@ -265,29 +260,17 @@ jobs:
             keep-outputs = true
             trusted-users = root
 
-      - name: 🗄️ Cache Nix store (build)
+      - name: 🗄️ Restore Nix store from setup job
         uses: nix-community/cache-nix-action@v6
         with:
-          primary-key: nix-build-${{ matrix.host }}-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
-          restore-prefixes-first-match: |
-            nix-build-${{ matrix.host }}-${{ runner.os }}-
-            nix-eval-${{ runner.os }}-
-          gc-max-store-size-linux: 6442450944
-          save: ${{ github.event_name != 'pull_request' }}
-          purge: true
-          purge-prefixes: |
-            nix-build-${{ matrix.host }}-${{ runner.os }}-
-            nix-build-*-${{ runner.os }}-
-          purge-created: 432000
-          purge-last-accessed: 172800
-          purge-primary-key: never
+          primary-key: ${{ needs.setup.outputs.cache-key }}
+          save: false
+          restore-prefixes-first-match: ${{ needs.setup.outputs.cache-key }}
 
       - name: 🏗️ Build ISO image for ${{ matrix.host }}
         id: build-result
         run: |
-          echo "=== Pre-evaluating ISO configuration ==="
           nix eval --raw .#nixosConfigurations.${{ matrix.host }}-iso.config.system.build.toplevel.drvPath
-          
           echo "=== Building ISO for ${{ matrix.host }} ==="
           nix build --print-build-logs .#nixosConfigurations.${{ matrix.host }}-iso.config.system.build.isoImage \
             --extra-experimental-features "nix-command flakes" \
@@ -356,9 +339,9 @@ jobs:
           nix path-info --all --size --human-readable | tail -5 || echo "Could not get store info"
 
   build-website:
-    needs: evaluate
+    needs: setup
     runs-on: self-hosted
-    if: needs.evaluate.outputs.eval-success == 'true'
+    if: needs.setup.outputs.eval-success == 'true'
     steps:
       - name: 🏠 Set up environment
         run: |
@@ -370,7 +353,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: 🛠️ Install Git (system-wide)
+      - name: 🛠️ Install Git
         run: |
           if ! command -v git &> /dev/null; then
             sudo apt-get update
@@ -396,7 +379,7 @@ jobs:
             fi
           done
 
-      - name: ❄️ Install Nix (quick single-user mode)
+      - name: ❄️ Install Nix
         uses: nixbuild/nix-quick-install-action@v30
         with:
           nix_conf: |
@@ -406,25 +389,67 @@ jobs:
             trusted-users = root
             sandbox = false
 
-      - name: 🗄️ Cache Nix store (website build)
+      - name: 🗄️ Restore Nix store from setup job
         uses: nix-community/cache-nix-action@v6
         with:
-          primary-key: nix-website-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}
-          restore-prefixes-first-match: |
-            nix-website-${{ runner.os }}-
-            nix-eval-${{ runner.os }}-
-          gc-max-store-size: 4000000000
-          save: ${{ github.event_name != 'pull_request' }}
+          primary-key: ${{ needs.setup.outputs.cache-key }}
+          save: false
+          restore-prefixes-first-match: ${{ needs.setup.outputs.cache-key }}
+
+      - name: 🔧 Build the website (Nix)
+        run: |
+          nix build .#notebook
+
+      - name: ⬆️ Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ./result/
+
+  update-cache:
+    needs: [setup, build-iso, build-website]
+    runs-on: self-hosted
+    if: always() && needs.setup.outputs.eval-success == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: 🌱 Checkout
+        uses: actions/checkout@v4
+
+      - name: 👥 Create nixbld group and users
+        run: |
+          if ! getent group nixbld >/dev/null; then
+            sudo groupadd -r nixbld
+            echo "✅ Created nixbld group"
+          else
+            echo "✅ nixbld group already exists"
+          fi
+          
+          for i in $(seq 1 10); do
+            if ! getent passwd nixbld$i >/dev/null; then
+              sudo useradd -r -g nixbld -G nixbld -d /var/empty -s /sbin/nologin -c "Nix build user $i" nixbld$i
+              echo "✅ Created nixbld$i user"
+            else
+              echo "✅ nixbld$i user already exists"
+            fi
+          done
+
+      - name: ❄️ Install Nix
+        uses: nixbuild/nix-quick-install-action@v30
+        with:
+          nix_conf: |
+            experimental-features = nix-command flakes
+            max-jobs = 4
+            cores = 2
+            trusted-users = root
+
+      - name: 🗄️ Update Nix store cache
+        uses: nix-community/cache-nix-action@v6
+        with:
+          primary-key: ${{ needs.setup.outputs.cache-key }}
+          restore-prefixes-first-match: ${{ needs.setup.outputs.cache-key }}
+          gc-max-store-size: 8000000000
+          save: true
           purge: true
           purge-created: 7 days
           purge-last-accessed: 3 days
-
-      - name: 🔧 Build the website (Nix) - with fallback
-        run: |
-          nix --accept-flake-config build .#notebook -o ./_site --option sandbox false
-
-      - name: ⬆️ Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
 
   deploy-pages:
     needs: build-website
@@ -439,9 +464,9 @@ jobs:
         uses: actions/deploy-pages@v4
 
   create-release:
-    needs: [evaluate, prepare, build-iso]
+    needs: [setup, prepare, build-iso]
     runs-on: self-hosted
-    if: needs.evaluate.outputs.eval-success == 'true' && needs.build-iso.result == 'success' && github.event_name != 'pull_request' && github.event.inputs.publish_packages != 'false'
+    if: needs.setup.outputs.eval-success == 'true' && needs.build-iso.result == 'success' && github.event_name != 'pull_request' && github.event.inputs.publish_packages != 'false'
     steps:
       - name: 🌱 Checkout
         uses: actions/checkout@v4
