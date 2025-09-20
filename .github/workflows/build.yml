@@ -200,7 +200,7 @@ jobs:
       - name: ⬆️ Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: ./website-deploy/*
+          path: ./website-deploy/
 
       - name: 🧹 Clean up disk space before ISO builds
         if: steps.build-conditions.outputs.should_build_isos == 'true'
