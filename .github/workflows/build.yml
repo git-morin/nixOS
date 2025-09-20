@@ -104,25 +104,6 @@ jobs:
             keep-env-derivations = true
             keep-outputs = true
 
-      - name: 🔑 Generate cache key
-        id: cache-key
-        run: |
-          CACHE_KEY="nix-store-${{ runner.os }}-${{ hashFiles('**/*.nix', '**/flake.lock') }}"
-          echo "key=$CACHE_KEY" >> $GITHUB_OUTPUT
-          echo "Generated cache key: $CACHE_KEY"
-
-      - name: 🗄️ Restore Nix store cache
-        id: cache
-        uses: nix-community/cache-nix-action@v6
-        with:
-          primary-key: ${{ steps.cache-key.outputs.key }}
-          restore-prefixes-first-match: nix-store-${{ runner.os }}-
-          gc-max-store-size: 8000000000
-          save: true
-          purge: true
-          purge-created: 7 days
-          purge-last-accessed: 3 days
-
       - name: 🧪 Show available outputs
         run: |
           nix flake show
@@ -211,18 +192,15 @@ jobs:
           mkdir -p website-deploy
           if [[ -L ./result ]]; then
             REAL_PATH=$(readlink -f ./result)          
-            cp -r "$REAL_PATH"/* website-deploy/
+            rsync -avL --chmod=u+w "$REAL_PATH/" website-deploy/
           else
-            cp -r ./result/* website-deploy/
+            rsync -avL --chmod=u+w ./result/ website-deploy/
           fi
-          
-          ls -la website-deploy/
-          find website-deploy -type f | wc -l
 
       - name: ⬆️ Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: ./website-deploy/
+          path: ./website-deploy/*
 
       - name: 🧹 Clean up disk space before ISO builds
         if: steps.build-conditions.outputs.should_build_isos == 'true'
@@ -336,9 +314,6 @@ jobs:
           
           echo "=== Nix store info ==="
           nix path-info --all --size --human-readable | tail -10 || echo "Could not get store info"
-          
-          # Clean up any remaining build artifacts
-          sudo rm -rf result* || true
 
   deploy-pages:
     needs: build-all
