@@ -130,26 +130,20 @@ jobs:
       - name: 🖥️ Evaluate NixOS configurations
         id: eval-check
         run: |
-          echo "=== Showing available configurations ==="
           nix flake show | grep -A 20 nixosConfigurations || true
           
-          echo "=== Evaluating main configuration ==="
           nix eval --raw .#nixosConfigurations.main.config.system.build.toplevel.drvPath
           echo "✅ Main configuration evaluation successful"
           
-          echo "=== Evaluating WSL configuration ==="
           nix eval --raw .#nixosConfigurations.wsl.config.system.build.toplevel.drvPath
           echo "✅ WSL configuration evaluation successful"
           
-          echo "=== Evaluating Server configuration ==="
           nix eval --raw .#nixosConfigurations.server.config.system.build.toplevel.drvPath
           echo "✅ Server configuration evaluation successful"
           
-          echo "=== Evaluating ISO configurations ==="
           nix eval --raw .#nixosConfigurations.main-iso.config.system.build.toplevel.drvPath
           echo "✅ Main ISO configuration evaluation successful"        
           
-          echo "=== Evaluating Notebook ==="
           nix eval --raw .#notebook.drvPath || echo "Notebook derivation not available"
           echo "✅ Notebook evaluation successful"        
           
@@ -187,17 +181,14 @@ jobs:
       - name: 🚦 Check build conditions
         id: build-conditions
         run: |
-          # Check if ISOs should be built based on input parameter and hosts
           BUILD_ISOS="true"
           
-          # If workflow_dispatch and build_isos is explicitly false
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             if [[ "${{ github.event.inputs.build_isos }}" == "false" ]]; then
               BUILD_ISOS="false"
             fi
           fi
           
-          # If no hosts are selected, don't build ISOs
           if [[ -z "${{ steps.set-hosts.outputs.hosts }}" ]]; then
             BUILD_ISOS="false"
           fi
@@ -211,15 +202,27 @@ jobs:
       - name: 🔧 Build the website/notebook
         id: build-website
         run: |
-          echo "=== Building website/notebook ==="
           nix build .#notebook --print-build-logs
-          ls -la ./result/
           echo "success=true" >> $GITHUB_OUTPUT
+
+      - name: 📁 Prepare website files for deployment
+        id: prepare-website
+        run: |
+          mkdir -p website-deploy
+          if [[ -L ./result ]]; then
+            REAL_PATH=$(readlink -f ./result)          
+            cp -r "$REAL_PATH"/* website-deploy/
+          else
+            cp -r ./result/* website-deploy/
+          fi
+          
+          ls -la website-deploy/
+          find website-deploy -type f | wc -l
 
       - name: ⬆️ Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: ./result/
+          path: ./website-deploy/
 
       - name: 🧹 Clean up disk space before ISO builds
         if: steps.build-conditions.outputs.should_build_isos == 'true'
