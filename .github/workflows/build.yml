@@ -45,12 +45,14 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  setup:
+  build-all:
     runs-on: self-hosted
     outputs:
       eval-success: ${{ steps.eval-check.outputs.success }}
-      cache-hit: ${{ steps.cache.outputs.cache-hit }}
-      cache-key: ${{ steps.cache-key.outputs.key }}
+      website-built: ${{ steps.build-website.outputs.success }}
+      iso-built: ${{ steps.build-iso-matrix.outputs.success }}
+      should-build-isos: ${{ steps.build-conditions.outputs.should_build_isos }}
+      hosts: ${{ steps.set-hosts.outputs.hosts }}
     steps:
       - name: 🏠 Set up environment
         run: |
@@ -99,6 +101,8 @@ jobs:
             cores = 2
             trusted-users = root
             sandbox = false
+            keep-env-derivations = true
+            keep-outputs = true
 
       - name: 🔑 Generate cache key
         id: cache-key
@@ -158,19 +162,6 @@ jobs:
           nix flake check --no-build
           nix flake metadata
 
-      - name: 📊 Show store usage
-        run: |
-          df -h /nix 2>/dev/null
-          nix path-info --all --size --human-readable | tail -10
-
-  prepare:
-    needs: setup
-    runs-on: self-hosted
-    if: needs.setup.outputs.eval-success == 'true'
-    outputs:
-      hosts: ${{ steps.set-hosts.outputs.hosts }}
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
-    steps:
       - name: 🎯 Determine hosts to build
         id: set-hosts
         run: |
@@ -193,42 +184,45 @@ jobs:
           echo "hosts=$HOSTS" >> $GITHUB_OUTPUT
           echo "Building ISOs for hosts: $HOSTS"
 
-      - name: 🔧 Set build matrix
-        id: set-matrix
+      - name: 🚦 Check build conditions
+        id: build-conditions
         run: |
-          HOSTS="${{ steps.set-hosts.outputs.hosts }}"
-          if [[ -z "$HOSTS" ]]; then
-            echo "matrix={\"host\":[]}" >> $GITHUB_OUTPUT
-            echo "Matrix: empty (no builds for this trigger)"
-          else
-            HOSTS_JSON=$(echo "$HOSTS" | sed 's/,/","/g' | sed 's/^/["/' | sed 's/$/"]/')
-            echo "matrix={\"host\":$HOSTS_JSON}" >> $GITHUB_OUTPUT
-            echo "Matrix: $HOSTS_JSON"
+          # Check if ISOs should be built based on input parameter and hosts
+          BUILD_ISOS="true"
+          
+          # If workflow_dispatch and build_isos is explicitly false
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            if [[ "${{ github.event.inputs.build_isos }}" == "false" ]]; then
+              BUILD_ISOS="false"
+            fi
           fi
+          
+          # If no hosts are selected, don't build ISOs
+          if [[ -z "${{ steps.set-hosts.outputs.hosts }}" ]]; then
+            BUILD_ISOS="false"
+          fi
+          
+          echo "should_build_isos=$BUILD_ISOS" >> $GITHUB_OUTPUT
+          echo "Should build ISOs: $BUILD_ISOS"
+          echo "Event name: ${{ github.event_name }}"
+          echo "Build ISOs input: ${{ github.event.inputs.build_isos }}"
+          echo "Hosts: ${{ steps.set-hosts.outputs.hosts }}"
 
-  build-iso:
-    needs: [setup, prepare]
-    runs-on: self-hosted
-    if: needs.setup.outputs.eval-success == 'true' && needs.prepare.outputs.hosts != '' && github.event.inputs.build_isos != 'false'
-    strategy:
-      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
-      fail-fast: false
-
-    outputs:
-      iso-built: ${{ steps.build-result.outputs.success }}
-      iso-path: ${{ steps.build-result.outputs.iso_path }}
-      iso-name: ${{ steps.build-result.outputs.iso_name }}
-
-    steps:
-      - name: 🏠 Set up environment
+      - name: 🔧 Build the website/notebook
+        id: build-website
         run: |
-          echo "HOME=/root" >> $GITHUB_ENV
-          echo "USER=root" >> $GITHUB_ENV
+          echo "=== Building website/notebook ==="
+          nix build .#notebook --print-build-logs
+          ls -la ./result/
+          echo "success=true" >> $GITHUB_OUTPUT
 
-      - name: 🌱 Checkout
-        uses: actions/checkout@v4
+      - name: ⬆️ Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ./result/
 
-      - name: 🧹 Clean up disk space
+      - name: 🧹 Clean up disk space before ISO builds
+        if: steps.build-conditions.outputs.should_build_isos == 'true'
         run: |
           sudo rm -rf /tmp/nixos-iso-* || true
           sudo rm -rf result* || true
@@ -236,231 +230,117 @@ jobs:
           docker image prune -af || true
           df -h
 
-      - name: 👥 Create nixbld group and users
+      - name: 🏗️ Build ISO images
+        id: build-iso-matrix
+        if: steps.build-conditions.outputs.should_build_isos == 'true'
         run: |
-          if ! getent group nixbld >/dev/null; then
-            sudo groupadd -r nixbld
-            echo "✅ Created nixbld group"
-          else
-            echo "✅ nixbld group already exists"
+          HOSTS="${{ steps.set-hosts.outputs.hosts }}"
+          
+          if [[ -z "$HOSTS" ]]; then
+            echo "No hosts to build ISOs for"
+            exit 0
           fi
           
-          for i in $(seq 1 10); do
-            if ! getent passwd nixbld$i >/dev/null; then
-              sudo useradd -r -g nixbld -G nixbld -d /var/empty -s /sbin/nologin -c "Nix build user $i" nixbld$i
-              echo "✅ Created nixbld$i user"
-            else
-              echo "✅ nixbld$i user already exists"
-            fi
-          done
-
-      - name: ❄️ Install Nix
-        uses: nixbuild/nix-quick-install-action@v30
-        with:
-          nix_conf: |
-            experimental-features = nix-command flakes
-            max-jobs = 4
-            cores = 2
-            keep-env-derivations = true
-            keep-outputs = true
-            trusted-users = root
-
-      - name: 🗄️ Restore Nix store from setup job
-        uses: nix-community/cache-nix-action@v6
-        with:
-          primary-key: ${{ needs.setup.outputs.cache-key }}
-          save: false
-          restore-prefixes-first-match: ${{ needs.setup.outputs.cache-key }}
-
-      - name: 🏗️ Build ISO image for ${{ matrix.host }}
-        id: build-result
-        run: |
-          nix eval --raw .#nixosConfigurations.${{ matrix.host }}-iso.config.system.build.toplevel.drvPath
-          echo "=== Building ISO for ${{ matrix.host }} ==="
-          nix build --print-build-logs .#nixosConfigurations.${{ matrix.host }}-iso.config.system.build.isoImage \
-            --extra-experimental-features "nix-command flakes" \
-            --max-jobs 4 \
-            --cores 2 \
-            || (echo "❌ ISO build failed for ${{ matrix.host }}" && exit 1)
-          
-          echo "success=true" >> $GITHUB_OUTPUT
-
-      - name: 📦 Prepare ISO artifact
-        run: |
-          ISO_PATH=$(find result/iso -name "*.iso" -type f | head -1)
-          
-          if [[ -z "$ISO_PATH" ]]; then
-            echo "❌ No ISO found in result/iso/"
-            find result -name "*.iso" -type f 2>/dev/null || true
-            ls -la result/ || true
-            exit 1
-          fi
-          
-          ISO_NAME=$(basename "$ISO_PATH")
-          ISO_SIZE=$(du -h "$ISO_PATH" | cut -f1)
           mkdir -p artifacts
-          TIMESTAMP=$(date +%Y%m%d-%H%M)
-          NEW_ISO_NAME="nixos-${{ matrix.host }}-${TIMESTAMP}.iso"
+          BUILD_SUCCESS="true"
           
-          echo "📦 Copying ISO: $ISO_PATH -> artifacts/${NEW_ISO_NAME}"
-          cp "$ISO_PATH" "artifacts/${NEW_ISO_NAME}"
+          # Convert comma-separated hosts to array
+          IFS=',' read -ra HOST_ARRAY <<< "$HOSTS"
           
-          cat > "artifacts/nixos-${{ matrix.host }}-metadata.json" << EOF
-          {
-            "host": "${{ matrix.host }}",
-            "iso_name": "${NEW_ISO_NAME}",
-            "original_name": "$ISO_NAME",
-            "iso_size": "$ISO_SIZE",
-            "build_date": "$(date -Iseconds)",
-            "commit_sha": "${{ github.sha }}",
-            "commit_ref": "${{ github.ref_name }}",
-            "workflow_run_id": "${{ github.run_id }}",
-            "download_url": "Release assets in GitHub repository"
-          }
+          for host in "${HOST_ARRAY[@]}"; do
+            echo "=== Building ISO for $host ==="
+          
+            # Evaluate first
+            nix eval --raw .#nixosConfigurations.$host-iso.config.system.build.toplevel.drvPath
+          
+            # Build the ISO
+            if nix build --print-build-logs .#nixosConfigurations.$host-iso.config.system.build.isoImage \
+                --extra-experimental-features "nix-command flakes" \
+                --max-jobs 4 \
+                --cores 2; then
+          
+              echo "✅ ISO build successful for $host"
+          
+              # Find and prepare the ISO
+              ISO_PATH=$(find result/iso -name "*.iso" -type f | head -1)
+          
+              if [[ -z "$ISO_PATH" ]]; then
+                echo "❌ No ISO found in result/iso/ for $host"
+                find result -name "*.iso" -type f 2>/dev/null || true
+                ls -la result/ || true
+                BUILD_SUCCESS="false"
+                continue
+              fi
+          
+              ISO_NAME=$(basename "$ISO_PATH")
+              ISO_SIZE=$(du -h "$ISO_PATH" | cut -f1)
+              TIMESTAMP=$(date +%Y%m%d-%H%M)
+              NEW_ISO_NAME="nixos-$host-${TIMESTAMP}.iso"
+          
+              echo "📦 Copying ISO: $ISO_PATH -> artifacts/${NEW_ISO_NAME}"
+              cp "$ISO_PATH" "artifacts/${NEW_ISO_NAME}"
+          
+              # Create metadata
+              cat > "artifacts/nixos-$host-metadata.json" << EOF
+              {
+                "host": "$host",
+                "iso_name": "${NEW_ISO_NAME}",
+                "original_name": "$ISO_NAME",
+                "iso_size": "$ISO_SIZE",
+                "build_date": "$(date -Iseconds)",
+                "commit_sha": "${{ github.sha }}",
+                "commit_ref": "${{ github.ref_name }}",
+                "workflow_run_id": "${{ github.run_id }}",
+                "download_url": "Release assets in GitHub repository"
+              }
           EOF
           
-          echo "iso_path=artifacts/${NEW_ISO_NAME}" >> $GITHUB_OUTPUT
-          echo "iso_name=${NEW_ISO_NAME}" >> $GITHUB_OUTPUT
+              echo "✅ ISO ready: ${NEW_ISO_NAME} (${ISO_SIZE})"
           
-          echo "✅ ISO ready: ${NEW_ISO_NAME} (${ISO_SIZE})"
+              # Clean up result for next build
+              sudo rm -rf result* || true
+          
+            else
+              echo "❌ ISO build failed for $host"
+              BUILD_SUCCESS="false"
+            fi
+          done
+          
+          if [[ "$BUILD_SUCCESS" == "true" ]]; then
+            echo "success=true" >> $GITHUB_OUTPUT
+            echo "✅ All ISO builds completed successfully"
+          
+            echo "📋 Final artifacts:"
+            ls -la artifacts/ || echo "No artifacts directory"
+          else
+            echo "❌ Some ISO builds failed"
+            exit 1
+          fi
 
-      - name: ⬆️ Upload ISO artifact
-        if: ${{ github.event.inputs.upload_artifacts != 'false' }}
+      - name: ⬆️ Upload ISO artifacts
+        if: steps.build-conditions.outputs.should_build_isos == 'true' && github.event.inputs.upload_artifacts != 'false'
         uses: actions/upload-artifact@v4
         with:
-          name: nixos-${{ matrix.host }}-iso
+          name: nixos-iso-images
           path: artifacts/
           retention-days: 30
           compression-level: 0
 
-      - name: 📊 Post-build cleanup and stats
+      - name: 📊 Show store usage and cleanup
         run: |
-          sudo rm -rf result* || true
-          
           echo "=== Final disk usage ==="
           df -h
           
           echo "=== Nix store info ==="
-          nix path-info --all --size --human-readable | tail -5 || echo "Could not get store info"
-
-  build-website:
-    needs: setup
-    runs-on: self-hosted
-    if: needs.setup.outputs.eval-success == 'true'
-    steps:
-      - name: 🏠 Set up environment
-        run: |
-          echo "HOME=/root" >> $GITHUB_ENV
-          echo "USER=root" >> $GITHUB_ENV
-
-      - name: 🌱 Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: 🛠️ Install Git
-        run: |
-          if ! command -v git &> /dev/null; then
-            sudo apt-get update
-            sudo apt-get install -y git
-          fi
-          git --version
-
-      - name: 👥 Create nixbld group and users
-        run: |
-          if ! getent group nixbld >/dev/null; then
-            sudo groupadd -r nixbld
-            echo "✅ Created nixbld group"
-          else
-            echo "✅ nixbld group already exists"
-          fi
+          nix path-info --all --size --human-readable | tail -10 || echo "Could not get store info"
           
-          for i in $(seq 1 10); do
-            if ! getent passwd nixbld$i >/dev/null; then
-              sudo useradd -r -g nixbld -G nixbld -d /var/empty -s /sbin/nologin -c "Nix build user $i" nixbld$i
-              echo "✅ Created nixbld$i user"
-            else
-              echo "✅ nixbld$i user already exists"
-            fi
-          done
-
-      - name: ❄️ Install Nix
-        uses: nixbuild/nix-quick-install-action@v30
-        with:
-          nix_conf: |
-            experimental-features = nix-command flakes
-            max-jobs = 4
-            cores = 2
-            trusted-users = root
-            sandbox = false
-
-      - name: 🗄️ Restore Nix store from setup job
-        uses: nix-community/cache-nix-action@v6
-        with:
-          primary-key: ${{ needs.setup.outputs.cache-key }}
-          save: false
-          restore-prefixes-first-match: ${{ needs.setup.outputs.cache-key }}
-
-      - name: 🔧 Build the website (Nix)
-        run: |
-          nix build .#notebook
-          ls -la ./result
-
-      - name: ⬆️ Upload Pages artifact
-        uses: actions/upload-pages-artifact@v4
-        with:
-          path: ./result/
-
-  update-cache:
-    needs: [setup, build-iso, build-website]
-    runs-on: self-hosted
-    if: always() && needs.setup.outputs.eval-success == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-      - name: 🌱 Checkout
-        uses: actions/checkout@v4
-
-      - name: 👥 Create nixbld group and users
-        run: |
-          if ! getent group nixbld >/dev/null; then
-            sudo groupadd -r nixbld
-            echo "✅ Created nixbld group"
-          else
-            echo "✅ nixbld group already exists"
-          fi
-          
-          for i in $(seq 1 10); do
-            if ! getent passwd nixbld$i >/dev/null; then
-              sudo useradd -r -g nixbld -G nixbld -d /var/empty -s /sbin/nologin -c "Nix build user $i" nixbld$i
-              echo "✅ Created nixbld$i user"
-            else
-              echo "✅ nixbld$i user already exists"
-            fi
-          done
-
-      - name: ❄️ Install Nix
-        uses: nixbuild/nix-quick-install-action@v30
-        with:
-          nix_conf: |
-            experimental-features = nix-command flakes
-            max-jobs = 4
-            cores = 2
-            trusted-users = root
-
-      - name: 🗄️ Update Nix store cache
-        uses: nix-community/cache-nix-action@v6
-        with:
-          primary-key: ${{ needs.setup.outputs.cache-key }}
-          restore-prefixes-first-match: ${{ needs.setup.outputs.cache-key }}
-          gc-max-store-size: 8000000000
-          save: true
-          purge: true
-          purge-created: 7 days
-          purge-last-accessed: 3 days
+          # Clean up any remaining build artifacts
+          sudo rm -rf result* || true
 
   deploy-pages:
-    needs: build-website
+    needs: build-all
     runs-on: self-hosted
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.build-all.outputs.website-built == 'true'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -470,17 +350,22 @@ jobs:
         uses: actions/deploy-pages@v4
 
   create-release:
-    needs: [setup, prepare, build-iso]
+    needs: build-all
     runs-on: self-hosted
-    if: needs.setup.outputs.eval-success == 'true' && needs.build-iso.result == 'success' && github.event_name != 'pull_request' && github.event.inputs.publish_packages != 'false'
+    if: |
+      needs.build-all.outputs.eval-success == 'true' && 
+      needs.build-all.outputs.iso-built == 'true' && 
+      github.event_name != 'pull_request' && 
+      (github.event.inputs.publish_packages != 'false' || github.event_name != 'workflow_dispatch')
     steps:
       - name: 🌱 Checkout
         uses: actions/checkout@v4
 
-      - name: ⬇️ Download all ISO artifacts
+      - name: ⬇️ Download ISO artifacts
         uses: actions/download-artifact@v4
         with:
-          path: release-artifacts
+          name: nixos-iso-images
+          path: artifacts
 
       - name: 📦 Prepare release assets
         id: prepare-assets
@@ -490,28 +375,25 @@ jobs:
           ASSET_LIST=""
           RELEASE_NOTES="## NixOS ISO Images\n\nBuilt from commit \`${{ github.sha }}\` on $(date -Iseconds)\n\n### Build Information\n- **Workflow Run**: [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\n- **Commit**: [\`${{ github.sha }}\`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})\n- **Branch/Tag**: \`${{ github.ref_name }}\`\n\n### Available Images\n\n"
           
-          for host_dir in release-artifacts/nixos-*-iso; do
-            if [[ -d "$host_dir" ]]; then
-              host_name=$(basename "$host_dir" | sed 's/nixos-\(.*\)-iso/\1/')
-              ISO_FILE=$(find "$host_dir" -name "*.iso" | head -1)
-              METADATA_FILE=$(find "$host_dir" -name "*metadata.json" | head -1)
+          for iso_file in artifacts/*.iso; do
+            if [[ -f "$iso_file" ]]; then
+              ISO_NAME=$(basename "$iso_file")
+              host_name=$(echo "$ISO_NAME" | sed 's/nixos-\(.*\)-[0-9]\{8\}-[0-9]\{4\}\.iso/\1/')
+              METADATA_FILE="artifacts/nixos-$host_name-metadata.json"
           
-              if [[ -f "$ISO_FILE" && -f "$METADATA_FILE" ]]; then
-                cp "$ISO_FILE" release-assets-final/
+              if [[ -f "$METADATA_FILE" ]]; then
+                cp "$iso_file" release-assets-final/
                 cp "$METADATA_FILE" release-assets-final/
-                ISO_NAME=$(basename "$ISO_FILE")
-                ISO_SIZE=$(du -h "$ISO_FILE" | cut -f1)
+                ISO_SIZE=$(du -h "$iso_file" | cut -f1)
                 ASSET_LIST="$ASSET_LIST release-assets-final/$ISO_NAME"
           
-                ISO_SHA256=$(sha256sum "$ISO_FILE" | cut -d' ' -f1)
+                ISO_SHA256=$(sha256sum "$iso_file" | cut -d' ' -f1)
                 echo "$ISO_SHA256  $ISO_NAME" > "release-assets-final/${ISO_NAME}.sha256"
                 ASSET_LIST="$ASSET_LIST release-assets-final/${ISO_NAME}.sha256"
           
                 RELEASE_NOTES="${RELEASE_NOTES}#### 🖥️ $host_name\n- **File**: \`$ISO_NAME\`\n- **Size**: $ISO_SIZE\n- **SHA256**: \`$ISO_SHA256\`\n- **Configuration**: nixosConfigurations.$host_name-iso\n\n"
               else
-                echo "⚠️  Warning: Missing files for $host_name"
-                echo "  ISO_FILE: $ISO_FILE"
-                echo "  METADATA_FILE: $METADATA_FILE"
+                echo "⚠️  Warning: Missing metadata file for $ISO_NAME"
               fi
             fi
           done
