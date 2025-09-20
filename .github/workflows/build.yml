@@ -13,6 +13,11 @@ on:
         required: false
         default: ''
         type: string
+      build_isos:
+        description: 'Build ISO images'
+        required: false
+        default: true
+        type: boolean
       upload_artifacts:
         description: 'Upload ISO artifacts'
         required: false
@@ -204,7 +209,7 @@ jobs:
   build-iso:
     needs: [setup, prepare]
     runs-on: self-hosted
-    if: needs.setup.outputs.eval-success == 'true' && needs.prepare.outputs.hosts != ''
+    if: needs.setup.outputs.eval-success == 'true' && needs.prepare.outputs.hosts != '' && github.event.inputs.build_isos != 'false'
     strategy:
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
       fail-fast: false
@@ -399,6 +404,7 @@ jobs:
       - name: 🔧 Build the website (Nix)
         run: |
           nix build .#notebook
+          ls -la ./result
 
       - name: ⬆️ Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
