@@ -10,6 +10,7 @@
         layers = [
           { path = ../notebook; pathString = "../notebook"; }
         ];
+        extraConfig.template.baseUrl = "/nixOS/";
       };
     };
   };
