@@ -146,7 +146,7 @@ jobs:
             if [[ "${{ github.event_name }}" == "pull_request" ]]; then
               INPUT_HOSTS=""
             else
-              INPUT_HOSTS="all"
+              INPUT_HOSTS="${{ github.event.inputs.hosts }}"
             fi
           fi
           
