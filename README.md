@@ -43,7 +43,6 @@ style Z fill:#FFF9C4
 │   ├── 👑 main/          # Configuration for my main computer.
 │   ├── 🛢️ server/        # Configuration for my homelab server.
 │   └── 📦 wsl/           # Configuration for my WSL environment.
-├── 💿 iso/             # ISO installer configurations.
 ├── 📚 lib/             # Library of helper Nix functions.
 └── 📜 README.md        # You are here.
 ```

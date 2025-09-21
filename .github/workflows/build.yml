@@ -7,27 +7,6 @@ on:
     branches:
       - main
   workflow_dispatch:
-    inputs:
-      hosts:
-        description: 'Hosts to build a ISO from'
-        required: false
-        default: ''
-        type: string
-      build_isos:
-        description: 'Build ISO images'
-        required: false
-        default: true
-        type: boolean
-      upload_artifacts:
-        description: 'Upload ISO artifacts'
-        required: false
-        default: false
-        type: boolean
-      publish_packages:
-        description: 'Create GitHub release with ISOs'
-        required: false
-        default: false
-        type: boolean
 
 env:
   HOME: /root
@@ -50,9 +29,6 @@ jobs:
     outputs:
       eval-success: ${{ steps.eval-check.outputs.success }}
       website-built: ${{ steps.build-website.outputs.success }}
-      iso-built: ${{ steps.build-iso-matrix.outputs.success }}
-      should-build-isos: ${{ steps.build-conditions.outputs.should_build_isos }}
-      hosts: ${{ steps.set-hosts.outputs.hosts }}
     steps:
       - name: 🏠 Set up environment
         run: |
@@ -122,9 +98,6 @@ jobs:
           nix eval --raw .#nixosConfigurations.server.config.system.build.toplevel.drvPath
           echo "✅ Server configuration evaluation successful"
           
-          nix eval --raw .#nixosConfigurations.main-iso.config.system.build.toplevel.drvPath
-          echo "✅ Main ISO configuration evaluation successful"        
-          
           nix eval --raw .#notebook.drvPath || echo "Notebook derivation not available"
           echo "✅ Notebook evaluation successful"        
           
@@ -136,49 +109,6 @@ jobs:
         run: |
           nix flake check --no-build
           nix flake metadata
-
-      - name: 🎯 Determine hosts to build
-        id: set-hosts
-        run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            INPUT_HOSTS="${{ github.event.inputs.hosts }}"
-          else
-            if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-              INPUT_HOSTS=""
-            else
-              INPUT_HOSTS="${{ github.event.inputs.hosts }}"
-            fi
-          fi
-          
-          if [[ "$INPUT_HOSTS" == "all" ]]; then
-            HOSTS="main,server"
-          else
-            HOSTS="$INPUT_HOSTS"
-          fi
-          
-          echo "hosts=$HOSTS" >> $GITHUB_OUTPUT
-          echo "Building ISOs for hosts: $HOSTS"
-
-      - name: 🚦 Check build conditions
-        id: build-conditions
-        run: |
-          BUILD_ISOS="true"
-          
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            if [[ "${{ github.event.inputs.build_isos }}" == "false" ]]; then
-              BUILD_ISOS="false"
-            fi
-          fi
-          
-          if [[ -z "${{ steps.set-hosts.outputs.hosts }}" ]]; then
-            BUILD_ISOS="false"
-          fi
-          
-          echo "should_build_isos=$BUILD_ISOS" >> $GITHUB_OUTPUT
-          echo "Should build ISOs: $BUILD_ISOS"
-          echo "Event name: ${{ github.event_name }}"
-          echo "Build ISOs input: ${{ github.event.inputs.build_isos }}"
-          echo "Hosts: ${{ steps.set-hosts.outputs.hosts }}"
 
       - name: 🔧 Build the website/notebook
         id: build-website
@@ -202,111 +132,6 @@ jobs:
         with:
           path: ./website-deploy/
 
-      - name: 🧹 Clean up disk space before ISO builds
-        if: steps.build-conditions.outputs.should_build_isos == 'true'
-        run: |
-          sudo rm -rf /tmp/nixos-iso-* || true
-          sudo rm -rf result* || true
-          docker system prune -af || true
-          docker image prune -af || true
-          df -h
-
-      - name: 🏗️ Build ISO images
-        id: build-iso-matrix
-        if: steps.build-conditions.outputs.should_build_isos == 'true'
-        run: |
-          HOSTS="${{ steps.set-hosts.outputs.hosts }}"
-          
-          if [[ -z "$HOSTS" ]]; then
-            echo "No hosts to build ISOs for"
-            exit 0
-          fi
-          
-          mkdir -p artifacts
-          BUILD_SUCCESS="true"
-          
-          # Convert comma-separated hosts to array
-          IFS=',' read -ra HOST_ARRAY <<< "$HOSTS"
-          
-          for host in "${HOST_ARRAY[@]}"; do
-            echo "=== Building ISO for $host ==="
-          
-            # Evaluate first
-            nix eval --raw .#nixosConfigurations.$host-iso.config.system.build.toplevel.drvPath
-          
-            # Build the ISO
-            if nix build --print-build-logs .#nixosConfigurations.$host-iso.config.system.build.isoImage \
-                --extra-experimental-features "nix-command flakes" \
-                --max-jobs 4 \
-                --cores 2; then
-          
-              echo "✅ ISO build successful for $host"
-          
-              # Find and prepare the ISO
-              ISO_PATH=$(find result/iso -name "*.iso" -type f | head -1)
-          
-              if [[ -z "$ISO_PATH" ]]; then
-                echo "❌ No ISO found in result/iso/ for $host"
-                find result -name "*.iso" -type f 2>/dev/null || true
-                ls -la result/ || true
-                BUILD_SUCCESS="false"
-                continue
-              fi
-          
-              ISO_NAME=$(basename "$ISO_PATH")
-              ISO_SIZE=$(du -h "$ISO_PATH" | cut -f1)
-              TIMESTAMP=$(date +%Y%m%d-%H%M)
-              NEW_ISO_NAME="nixos-$host-${TIMESTAMP}.iso"
-          
-              echo "📦 Copying ISO: $ISO_PATH -> artifacts/${NEW_ISO_NAME}"
-              cp "$ISO_PATH" "artifacts/${NEW_ISO_NAME}"
-          
-              # Create metadata
-              cat > "artifacts/nixos-$host-metadata.json" << EOF
-              {
-                "host": "$host",
-                "iso_name": "${NEW_ISO_NAME}",
-                "original_name": "$ISO_NAME",
-                "iso_size": "$ISO_SIZE",
-                "build_date": "$(date -Iseconds)",
-                "commit_sha": "${{ github.sha }}",
-                "commit_ref": "${{ github.ref_name }}",
-                "workflow_run_id": "${{ github.run_id }}",
-                "download_url": "Release assets in GitHub repository"
-              }
-          EOF
-          
-              echo "✅ ISO ready: ${NEW_ISO_NAME} (${ISO_SIZE})"
-          
-              # Clean up result for next build
-              sudo rm -rf result* || true
-          
-            else
-              echo "❌ ISO build failed for $host"
-              BUILD_SUCCESS="false"
-            fi
-          done
-          
-          if [[ "$BUILD_SUCCESS" == "true" ]]; then
-            echo "success=true" >> $GITHUB_OUTPUT
-            echo "✅ All ISO builds completed successfully"
-          
-            echo "📋 Final artifacts:"
-            ls -la artifacts/ || echo "No artifacts directory"
-          else
-            echo "❌ Some ISO builds failed"
-            exit 1
-          fi
-
-      - name: ⬆️ Upload ISO artifacts
-        if: steps.build-conditions.outputs.should_build_isos == 'true' && github.event.inputs.upload_artifacts != 'false'
-        uses: actions/upload-artifact@v4
-        with:
-          name: nixos-iso-images
-          path: artifacts/
-          retention-days: 30
-          compression-level: 0
-
       - name: 📊 Show store usage and cleanup
         run: |
           echo "=== Final disk usage ==="
@@ -326,92 +151,3 @@ jobs:
       - name: 🚀 Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
-  create-release:
-    needs: build-all
-    runs-on: self-hosted
-    if: |
-      needs.build-all.outputs.eval-success == 'true' && 
-      needs.build-all.outputs.iso-built == 'true' && 
-      github.event_name != 'pull_request' && 
-      (github.event.inputs.publish_packages != 'false' || github.event_name != 'workflow_dispatch')
-    steps:
-      - name: 🌱 Checkout
-        uses: actions/checkout@v4
-
-      - name: ⬇️ Download ISO artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: nixos-iso-images
-          path: artifacts
-
-      - name: 📦 Prepare release assets
-        id: prepare-assets
-        run: |
-          mkdir -p release-assets-final
-          
-          ASSET_LIST=""
-          RELEASE_NOTES="## NixOS ISO Images\n\nBuilt from commit \`${{ github.sha }}\` on $(date -Iseconds)\n\n### Build Information\n- **Workflow Run**: [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\n- **Commit**: [\`${{ github.sha }}\`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})\n- **Branch/Tag**: \`${{ github.ref_name }}\`\n\n### Available Images\n\n"
-          
-          for iso_file in artifacts/*.iso; do
-            if [[ -f "$iso_file" ]]; then
-              ISO_NAME=$(basename "$iso_file")
-              host_name=$(echo "$ISO_NAME" | sed 's/nixos-\(.*\)-[0-9]\{8\}-[0-9]\{4\}\.iso/\1/')
-              METADATA_FILE="artifacts/nixos-$host_name-metadata.json"
-          
-              if [[ -f "$METADATA_FILE" ]]; then
-                cp "$iso_file" release-assets-final/
-                cp "$METADATA_FILE" release-assets-final/
-                ISO_SIZE=$(du -h "$iso_file" | cut -f1)
-                ASSET_LIST="$ASSET_LIST release-assets-final/$ISO_NAME"
-          
-                ISO_SHA256=$(sha256sum "$iso_file" | cut -d' ' -f1)
-                echo "$ISO_SHA256  $ISO_NAME" > "release-assets-final/${ISO_NAME}.sha256"
-                ASSET_LIST="$ASSET_LIST release-assets-final/${ISO_NAME}.sha256"
-          
-                RELEASE_NOTES="${RELEASE_NOTES}#### 🖥️ $host_name\n- **File**: \`$ISO_NAME\`\n- **Size**: $ISO_SIZE\n- **SHA256**: \`$ISO_SHA256\`\n- **Configuration**: nixosConfigurations.$host_name-iso\n\n"
-              else
-                echo "⚠️  Warning: Missing metadata file for $ISO_NAME"
-              fi
-            fi
-          done
-          
-          if [[ -z "$ASSET_LIST" ]]; then
-            echo "❌ No assets found to release!"
-            exit 1
-          fi
-          
-          RELEASE_NOTES="${RELEASE_NOTES}### Usage\n\n1. Download the appropriate ISO for your target system\n2. Verify the checksum: \`sha256sum -c nixos-HOST-TIMESTAMP.iso.sha256\`\n3. Flash to USB: \`dd if=nixos-HOST-TIMESTAMP.iso of=/dev/sdX bs=4M status=progress\`\n4. Boot from USB and follow NixOS installation guide\n\n### Support\n\nFor issues with these images, please check the [repository](${{ github.server_url }}/${{ github.repository }}) or create an issue.\n"
-          
-          echo "asset_list=$ASSET_LIST" >> $GITHUB_OUTPUT
-          echo -e "$RELEASE_NOTES" > release-notes.md
-          
-          echo "📋 Release assets prepared:"
-          ls -la release-assets-final/
-          echo ""
-          echo "📝 Release notes preview:"
-          head -20 release-notes.md
-
-      - name: 🏷️ Create release tag and name
-        id: create-tag
-        run: |
-          TAG_NAME="nixos-iso-$(date +%Y%m%d-%H%M%S)"
-          RELEASE_NAME="NixOS ISO Images - $(date '+%Y-%m-%d %H:%M UTC')"
-          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
-          echo "release_name=$RELEASE_NAME" >> $GITHUB_OUTPUT
-          echo "🏷️  Creating release: $RELEASE_NAME"
-          echo "🏷️  Tag: $TAG_NAME"
-
-      - name: 🚀 Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.create-tag.outputs.tag_name }}
-          name: ${{ steps.create-tag.outputs.release_name }}
-          body_path: release-notes.md
-          files: release-assets-final/*
-          draft: false
-          prerelease: false
-          generate_release_notes: false
-          make_latest: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

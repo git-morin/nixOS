@@ -8,5 +8,4 @@
   additionalModules = [
     inputs.minegrub-theme.nixosModules.default
   ];
-  buildIso = true;
 }
