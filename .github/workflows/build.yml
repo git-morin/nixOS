@@ -30,7 +30,7 @@ jobs:
       eval-success: ${{ steps.eval-check.outputs.success }}
       website-built: ${{ steps.build-website.outputs.success }}
     steps:
-      - name: 🏠 Set up environment
+      - name: Set up environment
         run: |
           echo "HOME=/root" >> $GITHUB_ENV
           echo "USER=root" >> $GITHUB_ENV
@@ -38,19 +38,19 @@ jobs:
           echo "HOME: /root"
           echo "USER: root"
 
-      - name: 🌱 Checkout
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: 🛠️ Install Dependencies
+      - name: Install Dependencies
         run: |
           if ! command -v git &> /dev/null; then
             sudo apt-get update
             sudo apt-get install -y git
           fi
 
-      - name: 👥 Create nixbld group and users
+      - name: Create nixbld group and users
         run: |
           if ! getent group nixbld >/dev/null; then
             sudo groupadd -r nixbld
@@ -68,7 +68,7 @@ jobs:
             fi
           done
 
-      - name: ❄️ Install Nix
+      - name: Install Nix
         uses: nixbuild/nix-quick-install-action@v30
         with:
           nix_conf: |
@@ -80,11 +80,11 @@ jobs:
             keep-env-derivations = true
             keep-outputs = true
 
-      - name: 🧪 Show available outputs
+      - name: Show available outputs
         run: |
           nix flake show
 
-      - name: 🖥️ Evaluate NixOS configurations
+      - name: Evaluate NixOS configurations
         id: eval-check
         run: |
           nix flake show | grep -A 20 nixosConfigurations || true
@@ -105,49 +105,70 @@ jobs:
           
           echo "success=true" >> $GITHUB_OUTPUT
 
-      - name: 🔍 Additional validation
+      - name: Additional validation
         run: |
           nix flake check --no-build
           nix flake metadata
 
-      - name: 🔧 Build the website/notebook
+      - name: Build the website/notebook
         id: build-website
         run: |
           nix build .#notebook --print-build-logs
           echo "success=true" >> $GITHUB_OUTPUT
 
-      - name: 📁 Prepare website files for deployment
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Prepare website files for deployment
         id: prepare-website
         run: |
+          rm -rf website-deploy
           mkdir -p website-deploy
+          
+          echo "=== Checking result structure ==="
+          ls -la ./result/
+          find ./result/ -type f | head -20
+          
           if [[ -L ./result ]]; then
-            REAL_PATH=$(readlink -f ./result)          
-            rsync -avL --chmod=u+w "$REAL_PATH/" website-deploy/
+            REAL_PATH=$(readlink -f ./result)
+            cd "$REAL_PATH" && tar -cf - . | (cd "$GITHUB_WORKSPACE/website-deploy" && tar -xf -)
+            cd "$GITHUB_WORKSPACE"
           else
-            rsync -avL --chmod=u+w ./result/ website-deploy/
+            cd ./result && tar -cf - . | (cd "$GITHUB_WORKSPACE/website-deploy" && tar -xf -)
+            cd "$GITHUB_WORKSPACE"
           fi
+          
+          find website-deploy/ -type l -delete || true
+          
+          find website-deploy/ -type d -exec chmod 755 {} \;
+          find website-deploy/ -type f -exec chmod 644 {} \;
+          
+          find website-deploy/ -ls | head -20
+          find website-deploy/ -type f | wc -l
+          du -sh website-deploy/
 
-      - name: ⬆️ Upload Pages artifact
+      - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
           path: ./website-deploy/
 
-      - name: 📊 Show store usage and cleanup
+      - name: Show store usage and cleanup
         run: |
-          echo "=== Final disk usage ==="
           df -h
-          
-          echo "=== Nix store info ==="
           nix path-info --all --size --human-readable | tail -10 || echo "Could not get store info"
 
   deploy-pages:
     needs: build-all
     runs-on: self-hosted
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.build-all.outputs.website-built == 'true'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: 🚀 Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
