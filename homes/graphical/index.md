@@ -1,4 +1,4 @@
-# Graphical home
+# Graphical
 
 This is my home-manager config for my `graphical` user
 

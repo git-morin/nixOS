@@ -1,4 +1,4 @@
-# Terminal home
+# Terminal
 
 This is my home-manager config for my `terminal` user
 
