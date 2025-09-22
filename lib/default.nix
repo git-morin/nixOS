@@ -29,6 +29,42 @@ let
         in
           builtins.filter (p: p != null) (map getPackage packageNames);
 
+    # Import and process packages from a packages directory relative to the caller
+    importPackagesFromPath =
+      basePath: # Base path where packages directory is located
+      inputs: # Flake inputs
+      system: # System architecture
+        let
+          pkgs = import inputs.nixpkgs {
+            inherit system;
+            config = { allowUnfree = true; };
+          };
+          packagesPath = basePath + "/packages";
+          packageFiles = builtins.filter
+            (n: n != "default.nix" && builtins.match ".*\\.nix$" n != null)
+            (builtins.attrNames (builtins.readDir packagesPath));
+          importPackage = file: import (packagesPath + "/${file}") {
+            inherit pkgs inputs;
+          };
+          packageSets = map importPackage packageFiles;
+          extractPackages = set:
+            if builtins.hasAttr "home" set && builtins.hasAttr "packages" set.home
+            then set.home.packages
+            else [];
+        in
+          builtins.concatLists (map extractPackages packageSets);
+
+    # Import config files from a configs directory relative to the caller
+    importConfigsFromPath =
+      basePath: # Base path where configs directory is located
+        let
+          configsPath = basePath + "/configs";
+          configFiles = builtins.filter
+            (n: n != "default.nix" && builtins.match ".*\\.nix$" n != null)
+            (builtins.attrNames (builtins.readDir configsPath));
+        in
+          map (x: configsPath + "/${x}") configFiles;
+
     # Generate nixOS configuration from hosts
     buildNixosConfiguration = hostname: hostConfig:
       inputs.nixpkgs.lib.nixosSystem {
