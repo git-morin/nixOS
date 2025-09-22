@@ -31,6 +31,7 @@ jobs:
       md-changed: ${{ steps.changes.outputs.md }}
       should-eval: ${{ steps.changes.outputs.nix == 'true' || github.event_name == 'workflow_dispatch' }}
       should-build-website: ${{ steps.changes.outputs.md == 'true' || github.event_name == 'workflow_dispatch' }}
+      should-eval-notebook: ${{ steps.changes.outputs.nix == 'true' || steps.changes.outputs.md == 'true' || github.event_name == 'workflow_dispatch' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -58,7 +59,7 @@ jobs:
             echo "md=false" >> $GITHUB_OUTPUT
           fi
 
-  build-all:
+  eval:
     needs: check-changes
     runs-on: self-hosted
     if: needs.check-changes.outputs.should-eval == 'true' || needs.check-changes.outputs.should-build-website == 'true'
@@ -136,17 +137,18 @@ jobs:
           nix eval --raw .#nixosConfigurations.server.config.system.build.toplevel.drvPath
           echo "✅ Server configuration evaluation successful"
           
-          nix eval --raw .#notebook.drvPath || echo "Notebook derivation not available"
-          echo "✅ Notebook evaluation successful"        
-          
-          nix build .#nixosConfigurations.main.config.system.build.toplevel --no-link --print-build-logs
-          
           echo "success=true" >> $GITHUB_OUTPUT
 
       - name: Set eval success for skipped step
         if: needs.check-changes.outputs.should-eval != 'true'
         run: |
           echo "success=skipped" >> $GITHUB_OUTPUT
+
+      - name: Evaluate notebook
+        if: needs.check-changes.outputs.should-eval-notebook == 'true'
+        run: |
+          nix eval --raw .#notebook.drvPath
+          echo "✅ Notebook evaluation successful"
 
       - name: Additional validation
         if: needs.check-changes.outputs.should-eval == 'true'
@@ -211,9 +213,9 @@ jobs:
           nix path-info --all --size --human-readable | tail -10 || echo "Could not get store info"
 
   deploy-pages:
-    needs: [check-changes, build-all]
+    needs: [check-changes, eval]
     runs-on: self-hosted
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.build-all.outputs.website-built == 'true' && needs.check-changes.outputs.should-build-website == 'true'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.eval.outputs.website-built == 'true' && needs.check-changes.outputs.should-build-website == 'true'
     permissions:
       contents: read
       pages: write
