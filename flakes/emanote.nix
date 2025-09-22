@@ -16,11 +16,6 @@
           template = {
             baseUrl = "/nixOS/";
           };
-          pandoc = {
-            rewriteClass = {
-              "callout-note" = "bg-blue-100";
-            };
-          };
         };
       };
     };
