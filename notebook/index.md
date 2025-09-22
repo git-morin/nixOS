@@ -1,7 +1,6 @@
 # Notebook Index
 
-<div align='center'>
-
+:::{align="center"}
 Hi Gab,
 
 I've collected some notes and mental thoughts, filled with your opinion.
@@ -13,7 +12,7 @@ Remember to feed the cat. Also remember where you put this notebook.
 Good luck with whatever you plan to build,
 
 ~ Gab
-</div>
+:::
 
 > [!info]
 > **meta**
