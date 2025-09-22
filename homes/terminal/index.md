@@ -2,4 +2,4 @@
 
 This is my home-manager config for my `terminal` user
 
-[[default.nix]]
+[[./default.nix]]
