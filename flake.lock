@@ -110,15 +110,15 @@
         "unionmount": "unionmount"
       },
       "locked": {
-        "lastModified": 1758559512,
-        "narHash": "sha256-nPFCUrgrs8Ezr8ziT/2EZhTtq9iTNuTCjiBPjt52EtA=",
-        "owner": "git-morin",
+        "lastModified": 1757871680,
+        "narHash": "sha256-fuYOVo4EFBrxenewWzn5HrvAi15mz6kks4P9L7+3TkI=",
+        "owner": "srid",
         "repo": "emanote",
-        "rev": "f61683cea23e2c3a41c6db141169be4c97209083",
+        "rev": "966072803b8bf0456ff94e4e9b6125632d9a0ba1",
         "type": "github"
       },
       "original": {
-        "owner": "git-morin",
+        "owner": "srid",
         "repo": "emanote",
         "type": "github"
       }

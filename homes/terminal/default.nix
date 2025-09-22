@@ -1,10 +1,10 @@
-{ inputs, system, lib, ... }: {
+{ inputs, system, innerLib, ... }: {
   home = {
     stateVersion = "24.11";
-    packages = lib.importPackagesFromPath ./. inputs system;
+    packages = innerLib.importPackagesFromPath ./. inputs system;
   };
 
-  imports = lib.importConfigsFromPath ./.;
+  imports = innerLib.importConfigsFromPath ./.;
 
   programs.home-manager.enable = true;
 }
