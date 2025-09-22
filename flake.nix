@@ -33,7 +33,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     emanote = {
-      url = "github:srid/emanote";
+      url = "github:git-morin/emanote";
     };
   };
 
