@@ -1,0 +1,3 @@
+# Terminal packages
+
+[[base.nix]]
