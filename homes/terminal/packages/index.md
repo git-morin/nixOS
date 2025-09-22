@@ -1,3 +1,5 @@
-# Terminal packages
+# Packages packages
 
-![[base.nix]]
+![[terminal/packages/base.nix]]#
+
+![[terminal/packages/development.nix]]#
