@@ -1,9 +1,13 @@
 { inputs, system, userList }:
-{ config, pkgs, ... }: {
+{ config, pkgs, ... }:
+let
+  lib = (import ../lib { inherit inputs; }).withInputs inputs;
+in
+{
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
-    extraSpecialArgs = { inherit inputs; };
+    extraSpecialArgs = { inherit inputs lib; };
     users = {
       gab = { config, pkgs, ... }: {
         imports = [
