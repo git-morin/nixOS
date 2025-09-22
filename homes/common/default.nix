@@ -1,9 +1,9 @@
-{ inputs, system, lib, ... }: {
+{ inputs, system, lib, innerLib, ... }: {
   home = {
     homeDirectory = lib.mkDefault "/home/gab";
     username = lib.mkDefault "gab";
-    packages = lib.importPackagesFromPath ./. inputs system;
+    packages = innerLib.importPackagesFromPath ./. inputs system;
   };
 
-  imports = lib.importConfigsFromPath ./.;
+  imports = innerLib.importConfigsFromPath ./.;
 }
