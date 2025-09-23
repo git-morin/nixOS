@@ -1,5 +1,7 @@
 # Flakes
 
+These are my `flakes` declarations
+
 ## nixos
 
 ![[nixos.nix]]
