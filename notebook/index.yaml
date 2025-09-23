@@ -10,20 +10,27 @@ page:
       body, p, h1, h2, h3, h4, h5, h6, .mb-3 {
         color: #1f2937;
       }
-      .dark body, 
-      .dark p, 
-      .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6,
-      .dark .mb-3 {
-        color: #f3f4f6;
+      blockquote {
+        color: #6b7280;
+        border-left-color: #d1d5db;
       }
-      .dark blockquote {
-        color: #d1d5db;
-        border-left-color: #4b5563;
+      code {
+        background-color: #f3f4f6;
+        color: #374151;
+      }        
+      @media (prefers-color-scheme: dark) {
+         body, p, h1, h2, h3, h4, h5, h6, .mb-3 {
+         color: #ffffff;
+      } 
+      blockquote {
+       color: #d1d5db;
+       border-left-color: #4b5563;
+      }   
+      code {
+       background-color: #374151;
+       color: #e5e7eb;
       }
-      .dark code {
-        background-color: #374151;
-        color: #e5e7eb;
-      }
+    }
     </style>
 
 template:
