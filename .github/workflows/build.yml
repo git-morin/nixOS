@@ -87,8 +87,18 @@ jobs:
             sudo apt-get install -y git
           fi
 
-      - name: Create nixbld group and users
+      - name: Setup Nix environment and install if needed
+        id: nix-setup
         run: |
+          NIX_INSTALLED=false
+          if command -v nix &> /dev/null && nix --version &> /dev/null; then
+            echo "✅ Nix is already installed and functional"
+            echo "Nix version: $(nix --version)"
+            NIX_INSTALLED=true
+          else
+            echo "❌ Nix not found or not functional"
+          fi
+          
           if ! getent group nixbld >/dev/null; then
             sudo groupadd -r nixbld
             echo "✅ Created nixbld group"
@@ -104,8 +114,15 @@ jobs:
               echo "✅ nixbld$i user already exists"
             fi
           done
+          
+          if [ "$NIX_INSTALLED" = true ]; then
+            echo "install-nix=false" >> $GITHUB_OUTPUT
+          else
+            echo "install-nix=true" >> $GITHUB_OUTPUT
+          fi
 
       - name: Install Nix
+        if: steps.nix-setup.outputs.install-nix == 'true'
         uses: nixbuild/nix-quick-install-action@v30
         with:
           nix_conf: |
