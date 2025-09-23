@@ -6,6 +6,25 @@ page:
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/nix.min.js"></script>
     </with>
+    <style>
+      body, p, h1, h2, h3, h4, h5, h6, .mb-3 {
+        color: #1f2937;
+      }
+      .dark body, 
+      .dark p, 
+      .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6,
+      .dark .mb-3 {
+        color: #f3f4f6;
+      }
+      .dark blockquote {
+        color: #d1d5db;
+        border-left-color: #4b5563;
+      }
+      .dark code {
+        background-color: #374151;
+        color: #e5e7eb;
+      }
+    </style>
 
 template:
   uptree:
