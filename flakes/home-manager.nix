@@ -8,6 +8,7 @@ in
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
+    backupFileExtension = "bck";
     extraSpecialArgs = {
       inherit inputs system;
       innerLib = innerLib;
