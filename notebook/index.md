@@ -20,6 +20,7 @@ Good luck with whatever you plan to build,
 > Please note that I employ the first person simply as a writing style.
 > I do not suffer from memory loss.
 
+- [[Programming]]#
 
 :::{align="center"}
 *Built with [Emanote](https://emanote.srid.ca)*
