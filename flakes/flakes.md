@@ -6,8 +6,8 @@
 
 ## home-manager
 
-![[home-manager.nix]]
+![[common/home-manager.nix]]
 
 ## emanote
 
-![[emanote]]
+![[emanote.nix]]
