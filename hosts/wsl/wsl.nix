@@ -6,10 +6,10 @@
   wsl.interop.register = true;
   wsl.interop.includePath = false;
 
-  systemd.extraConfig = ''
-      DefaultTimeoutStopSec=10s
-  '';
 
+  systemd.settings.Manager = {
+    DefaultTimeoutStopSec= "10s";
+  };
   systemd.services.systemd-udev-trigger.enable = false;
   systemd.services.systemd-udevd.enable = false;
   boot.tmp.useTmpfs = true;
