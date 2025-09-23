@@ -6,7 +6,7 @@
 
 ## home-manager
 
-![[common/home-manager.nix]]
+![[home-manager.nix]]
 
 ## emanote
 

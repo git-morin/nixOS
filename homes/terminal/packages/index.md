@@ -1,4 +1,4 @@
-# Packages packages
+# Terminal packages
 
 ![[terminal/packages/base.nix]]#
 
