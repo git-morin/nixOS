@@ -17,6 +17,11 @@ Good luck with whatever you plan to build,
 > [!info]
 > **meta**
 >
-> Please note that I employ the first person simply as a writing style. I do not suffer from memory loss and these notes can also be read by others.
+> Please note that I employ the first person simply as a writing style.
+> I do not suffer from memory loss.
 
+
+:::{align="center"}
+*Built with [Emanote](https://emanote.srid.ca)*
+:::
 
