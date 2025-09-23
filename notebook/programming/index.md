@@ -1,6 +1,6 @@
 # Programming
 
-- [[nix]]#
+- [[nix]]
 
 ## Resources
 
