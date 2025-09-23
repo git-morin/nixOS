@@ -2,12 +2,12 @@
 
 ## nixos
 
-![[flakes/nixos.nix]]
+![[nixos.nix]]
 
 ## home-manager
 
-![[flakes/home-manager.nix]]
+![[home-manager.nix]]
 
 ## emanote
 
-![[flakes/emanote]]
+![[emanote]]
