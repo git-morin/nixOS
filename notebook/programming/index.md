@@ -7,7 +7,7 @@
 I'd start by checking the manual of the language I'm writing in.
 
 After that I'd check GitHub's `explore` section for the most popular projects made in that language,
-mainly those oriented at developers. (Build tools, dependency management, linting, templates, etc...)
+mainly those oriented at developers. (Build tools, dependency management, linting, templates, etc...) 
 
 Additionally, I'd want to learn some things from these (which are more generic):
 
