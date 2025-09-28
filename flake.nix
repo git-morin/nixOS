@@ -35,6 +35,7 @@
     emanote = {
       url = "github:srid/emanote";
       inputs.nixpkgs.follows = "nixpkgs";
+      rev = "f568ac202991b4893ff138e1f668d9bdd20051b3";
     };
   };
 
