@@ -1,6 +1,6 @@
 # Flakes
 
-These are my `flakes` declarations
+These are my `flakes` declarations.
 
 ## nixos
 
