@@ -1,11 +1,6 @@
 page:
   siteTitle: Gab's Notebook
   headHtml: |
-    <snippet var="js.highlightjs" />
-    <with var="js">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/nix.min.js"></script>
-    </with>
     <style>
       body, p, h1, h2, h3, h4, h5, h6, .mb-3 {
         color: #1f2937;
@@ -34,6 +29,8 @@ page:
     </style>
 
 template:
+  iconUrl: favicon.ico
+  urlStrategy: pretty
   uptree:
     enable: true
   sidebar:
