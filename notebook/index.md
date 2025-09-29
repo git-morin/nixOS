@@ -1,28 +1,42 @@
-# Notebook Index
+# Gab's Notebook
 
-:::{align="center"}
-Hi Gab,
+Just some personal notes.
 
-I've collected some notes and mental thoughts, filled with your opinion.
+## Main Sections
 
-Hopefully you do not forget their contents too often, and most of all you don't forget to update them.
+### Programming
 
-Remember to feed the cat. Also remember where you put this notebook.
+:::{.grid .grid-cols-2 .gap-4 .my-4}
 
-Good luck with whatever you plan to build,
+**Languages & Frameworks**
+- [[programming/nix]]# - Nix language and ecosystem
+- [[programming/rust]]# - Systems programming with Rust
+- [[programming/python]]# - Python development
+- [[programming/java]]# - Java programming
+- [[programming/typescript]]# - TypeScript and modern JavaScript
 
-~ Gab
-
-
-- [[programming]]#
-- [[IT]]#
-
-
-*Built with [Emanote](https://emanote.srid.ca)*
 :::
 
-> [!info]
-> **meta**
->
-> Please note that I employ the first person simply as a writing style.
-> I do not suffer from memory loss.
+### IT & Infrastructure
+
+:::{.grid .grid-cols-2 .gap-4 .my-4}
+
+**Infrastructure & Security**
+- [[IT/homelab]]# - My Home lab setup
+- [[IT/security]]# - Security practices
+- [[IT/jailbreaking]]# - Device jailbreaking
+- [[IT/gaming]]# - My gaming setup
+
+:::
+
+## Quick Navigation
+
+:::{.flex .justify-center .space-x-8 .my-6}
+[[programming]]# | [[IT]]#
+:::
+
+---
+
+:::{.text-center .text-gray-600 .text-sm}
+*Built with [Emanote](https://emanote.srid.ca)*
+:::
