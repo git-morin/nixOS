@@ -6,39 +6,25 @@ Just my personal notes.
 
 ### Programming
 
-:::{.highlight-block}
-Explore programming languages, frameworks, and development practices.
-:::
-
 :::{class="grid grid-cols-2 gap-4 my-4"}
-**Languages & Frameworks**
+**My experience programming with:**
 
-- [[programming/nix]]# - Nix language and ecosystem  
-- [[programming/rust]]# - Systems programming with Rust
-- [[programming/python]]# - Python development
-- [[programming/java]]# - Java programming  
-- [[programming/typescript]]# - TypeScript and modern JavaScript
+- [[programming/nix]]# - My experience with Nix
+- [[programming/rust]]# - My experience with Rust
+- [[programming/python]]# - My experience with Python
+- [[programming/java]]# - My experience with Java
+- [[programming/typescript]]# - My experience with Typescript
 :::
 
 ### IT & Infrastructure
 
-:::{.highlight-block}
-System administration, security, and technical operations.
-:::
-
 :::{class="grid grid-cols-2 gap-4 my-4"}
 **Infrastructure & Security**
 
-- [[IT/homelab]]# - Home lab setup and management
-- [[IT/security]]# - Security practices and tools
-- [[IT/jailbreaking]]# - Device modification guides
-- [[IT/gaming]]# - Gaming-related technical content
-:::
-
-## Quick Navigation
-
-:::{class="flex justify-center space-x-8 my-6"}
-[[programming]]# | [[IT]]#
+- [[IT/homelab]]# - My notes on setting up and maintaining a homelab
+- [[IT/security]]# - My notes on having good security practices
+- [[IT/jailbreaking]]# - My notes on jailbreaking.
+- [[IT/gaming]]# - My notes on setting up and maintaining a gaming environment
 :::
 
 ---
