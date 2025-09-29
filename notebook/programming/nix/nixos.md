@@ -34,3 +34,9 @@ flowchart TB
     style C fill:#00C853
     style D fill:#2962FF
 ```
+
+## Tools
+
+- [Flakegen](https://github.com/jorsn/flakegen) - Flakegen 
+- [Flake-parts](https://github.com/hercules-ci/flake-parts) - Flake parts
+- [Home Manager](https://github.com/nix-community/home-manager) - Home Manager
