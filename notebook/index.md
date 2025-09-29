@@ -9,22 +9,22 @@ Just my personal notes.
 :::{class="grid grid-cols-2 gap-4 my-4"}
 **My experience programming with:**
 
-- [[programming/nix]]# - My experience with Nix
-- [[programming/rust]]# - My experience with Rust
-- [[programming/python]]# - My experience with Python
-- [[programming/java]]# - My experience with Java
-- [[programming/typescript]]# - My experience with Typescript
+- [[programming/nix]]# 
+- [[programming/rust]]# 
+- [[programming/python]]# 
+- [[programming/java]]# 
+- [[programming/typescript]]# 
 :::
 
 ### IT & Infrastructure
 
 :::{class="grid grid-cols-2 gap-4 my-4"}
-**Infrastructure & Security**
+**My notes on**
 
-- [[IT/homelab]]# - My notes on setting up and maintaining a homelab
-- [[IT/security]]# - My notes on having good security practices
-- [[IT/jailbreaking]]# - My notes on jailbreaking.
-- [[IT/gaming]]# - My notes on setting up and maintaining a gaming environment
+- [[IT/homelab]]# - setting up and maintaining a homelab
+- [[IT/security]]# - having good security practices
+- [[IT/jailbreaking]]# - everything I can.
+- [[IT/gaming]]# - setting up and maintaining a gaming environment
 :::
 
 ---
