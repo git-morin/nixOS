@@ -12,15 +12,8 @@ Remember to feed the cat. Also remember where you put this notebook.
 Good luck with whatever you plan to build,
 
 ~ Gab
-:::
 
-> [!info]
-> **meta**
->
-> Please note that I employ the first person simply as a writing style.
-> I do not suffer from memory loss.
 
-:::{align="center"}
 - [[programming]]#
 - [[IT]]#
 
@@ -28,3 +21,8 @@ Good luck with whatever you plan to build,
 *Built with [Emanote](https://emanote.srid.ca)*
 :::
 
+> [!info]
+> **meta**
+>
+> Please note that I employ the first person simply as a writing style.
+> I do not suffer from memory loss.
