@@ -2,7 +2,7 @@
 
 [Nix](https://nixos.org/) is a tool and a functional language that takes a unique approach to package management and system configuration.
 
-Nix also employs a clever way to store packages/derivations/data to reuse and avoid building software on demand (instead pulling from the nixpkgs registry if possible).
+Nix also employs a clever way to store packages/derivations/data to reuse and avoid building software on demand (instead pulling from the nixpkgs registry if possible). 
 
 ## [[nixos]]# 
 
