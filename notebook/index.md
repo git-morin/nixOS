@@ -1,8 +1,8 @@
 # Gab's Notebook
 
+:::{class="text-center"}
 Just my personal notes.
-
-## Main Sections
+:::
 
 ### Programming
 
