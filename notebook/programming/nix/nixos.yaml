@@ -1,0 +1,3 @@
+page:
+  bodyHtml: |
+    <snippet var="js.mermaid" />
