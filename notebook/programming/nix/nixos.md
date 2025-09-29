@@ -26,11 +26,11 @@ config:
   layout: elk
 ---
 flowchart TB
-A["🏠 homes/"] --> Z["📂 common"]
-Z --> C["📂 graphical"] & D["📂 terminal"]
-C --> G["🖥️ main/"]
-D --> G & I["🖥️ proxmox/"] & H["🖥️ wsl/"]
-style C fill:#00C853
-style D fill:#2962FF
-style Z fill:#FFF9C4
+    A["🏠 homes/"] --> Z["📂 common"]
+    Z --> C["📂 graphical"] & D["📂 terminal"]
+    C --> G["🖥️ main/"]
+    D --> G & I["🖥️ proxmox/"] & H["🖥️ wsl/"]
+    style Z fill:#D50000,stroke:#000000
+    style C fill:#00C853
+    style D fill:#2962FF
 ```

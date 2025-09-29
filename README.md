@@ -1,35 +1,6 @@
 <div align='center'>
-<img src="assets/logo.png" />
-</div>
 
-<div align='center'>
-
-# ❄️ NixOS Configuration
-[![NixOS](https://img.shields.io/badge/NixOS-unstable-blue.svg?style=flat&logo=NixOS&logoColor=white)](https://nixos.org)
----
-
-## 🏗️ Overview
-
-```mermaid
----
-config:
-  layout: elk
----
-flowchart TB
-A["🏠 homes/"] --> Z["📂 common"]
-Z --> C["📂 graphical"] & D["📂 terminal"]
-C --> G["🖥️ main/"]
-D --> G & I["🖥️ proxmox/"] & H["🖥️ wsl/"]
-style C fill:#00C853
-style D fill:#2962FF
-style Z fill:#FFF9C4
-```
-
-</div>
-
-<div align='center'>
-
-## 📂 Project Structure
+##  https://git-morin.github.io/nixOS/programming/nix/nixos
 
 </div>
 
@@ -44,6 +15,7 @@ style Z fill:#FFF9C4
 │   ├── 🛢️ server/        # Configuration for my homelab server.
 │   └── 📦 wsl/           # Configuration for my WSL environment.
 ├── 📚 lib/             # Library of helper Nix functions.
+├── 📓 notebook/        # Notebook produced by emanote.
 └── 📜 README.md        # You are here.
 ```
 
