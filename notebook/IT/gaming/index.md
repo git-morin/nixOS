@@ -6,7 +6,7 @@ This allows me more configuration than most games offer via their settings.
 
 Since I game on an old GPU (Nvidia GTX 1080) I often need to do some additional adjustments to make games run smoothly.
 
-I've been able to keep up with most games up to this date, here's a list of games I've played:
+I've been able to keep up with most games up to this date, here's a list of games I've played this year:
 
 - [Clair Obscur: Expedition 33](https://en.wikipedia.org/wiki/Clair_Obscur:_Expedition_33)
 - [Red Dead Redemption 2](https://en.wikipedia.org/wiki/Red_Dead_Redemption_2)
