@@ -16,6 +16,9 @@
       open = false;
       nvidiaSettings = true;
       package = config.boot.kernelPackages.nvidiaPackages.stable;
+      
+      # Force full composition pipeline to prevent screen tearing
+      forceFullCompositionPipeline = true;
     };
   };
 }
