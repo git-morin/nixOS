@@ -1,15 +1,7 @@
 {pkgs, inputs, ...}:{
   programs = {
-    hyprland = {
-      enable = true;
-      withUWSM = true;
-    };
-    hyprlock = {
-      enable = true;
-    };
-    uwsm = {
-      enable = true;
-    };
+    # KDE Partition Manager
+    partition-manager.enable = true;
   };
 
   services = {
@@ -22,8 +14,14 @@
       };
     };
     xserver.videoDrivers = ["nvidia"];
-    displayManager.sddm.enable = true;
-    displayManager.sessionPackages = [ pkgs.hyprland ];
+    
+    # KDE Plasma 6 with Wayland
+    displayManager.sddm = {
+      enable = true;
+      wayland.enable = true;
+    };
+    desktopManager.plasma6.enable = true;
+    
     printing.enable = false;
     pulseaudio.enable = false;
     geoclue2.enable = true;
@@ -35,15 +33,13 @@
       };
       pulse.enable = true;
     };
-    hypridle = {
-      enable = true;
-    };
   };
 
+  # XDG Portal configuration for KDE
   xdg.portal = {
     enable = true;
     extraPortals = with pkgs; [
-      xdg-desktop-portal-hyprland
+      xdg-desktop-portal-kde
       xdg-desktop-portal-gtk
     ];
   };
