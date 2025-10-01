@@ -2,7 +2,7 @@
 
 [Make](https://en.wikipedia.org/wiki/Make_(software)) is a declarative file (`Makefile`) which is often used as a build/developer tool for software.
 
-I sometimes use a `Makefile`, and when I do I use the following template:
+I sometimes use a `Makefile`, and when I do I use the following template: 
 
 ```makefile
 SHELL := /usr/bin/env bash
