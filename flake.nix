@@ -33,7 +33,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     emanote = {
-      url = "github:srid/emanote/813dc87c3bba3e6b89efad97797fab28b398d8dd";
+      url = "github:srid/emanote/f2839e0ba916d68af71887d7ccf8bef63c083a77";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
