@@ -1,6 +1,12 @@
 # Programming
 
-- [[nix]]#
+## Languages
+- [[nix]]# | [[nixos]]#
+
+
+## Tools
+
+- [[Make]]#
 
 ## Resources
 
