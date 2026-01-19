@@ -7,8 +7,12 @@ let
   filterHost = name:
     let
       hostType = allHosts.${name};
+      metaPath = ../hosts + "/${name}/_meta.nix";
+      hasMeta = builtins.pathExists metaPath;
+      meta = if hasMeta then (import metaPath) { inherit inputs; } else {};
+      isDarwin = (meta.type or "") == "darwin";
     in
-      hostType == "directory" && name != "common";
+      hostType == "directory" && name != "common" && !isDarwin;
 
   validHostNames = builtins.filter filterHost (builtins.attrNames allHosts);
 
