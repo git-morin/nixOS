@@ -71,6 +71,16 @@ let
           ../iso/${hostname}.nix
         ];
       };
+
+    # Generate darwin (macOS) configuration from hosts
+    buildDarwinConfiguration = hostname: hostConfig:
+      inputs.nix-darwin.lib.darwinSystem {
+        system = hostConfig.system or "aarch64-darwin";
+        specialArgs = { inherit inputs; };
+        modules = [
+          ../hosts/${hostname}
+        ] ++ (hostConfig.additionalModules or []);
+      };
   };
 in
 (mkLib null) // {

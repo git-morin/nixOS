@@ -1,3 +1,6 @@
 .idea/
 *.iml
 .result/
+
+# TM-specific configuration
+hosts/macos/homebrew-tm.nix
