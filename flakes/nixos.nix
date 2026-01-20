@@ -23,29 +23,17 @@ let
     }) validHostNames);
 
   hostConfigs = builtins.mapAttrs
-    (name: type:
+    (name: _:
       let
-        inputsPath = ../hosts + "/${name}/_meta.nix";
+        metaPath = ../hosts + "/${name}/_meta.nix";
       in
-        if builtins.pathExists inputsPath
-        then (import inputsPath) { inherit inputs; }
+        if builtins.pathExists metaPath
+        then (import metaPath) { inherit inputs; }
         else throw "_meta.nix not found for host: ${name}"
     ) validHosts;
 
-  nixosConfigurations = builtins.mapAttrs
+in {
+  flake.nixosConfigurations = builtins.mapAttrs
     (name: hostConfig: innerLib.buildNixosConfiguration name hostConfig)
     hostConfigs;
-
-  hostsWithIsoNames = builtins.filter
-    (name: (hostConfigs.${name}).buildIso or false)
-    (builtins.attrNames hostConfigs);
-
-  isoConfigurations = builtins.listToAttrs
-    (map (name: {
-      name = "${name}-iso";
-      value = innerLib.buildIsoConfiguration name hostConfigs.${name};
-    }) hostsWithIsoNames);
-
-in {
-  flake.nixosConfigurations = nixosConfigurations // isoConfigurations;
 }
