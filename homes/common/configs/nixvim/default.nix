@@ -1,5 +1,5 @@
 let
-  lib = import ../../../../../lib;
+  lib = import ../../../../lib;
 in
 {
   imports = lib.importNixFiles ./.;

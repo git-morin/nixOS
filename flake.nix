@@ -25,9 +25,6 @@
       url = "github:nix-community/NixOS-WSL";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-#    proxmox-nixos = {
-#      url = "github:SaumonNet/proxmox-nixos";
-#    };
     disko = {
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -50,7 +47,6 @@
     nixvim,
     minegrub-theme,
     nixos-wsl,
-#    proxmox-nixos,
     disko,
     nixos-anywhere,
     emanote,

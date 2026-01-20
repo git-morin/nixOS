@@ -13,15 +13,13 @@ in
       inherit inputs system;
       innerLib = innerLib;
     };
-    users = {
-      gab = { config, pkgs, ... }: {
-        imports = [
-          ../homes/common
-        ] ++ (map (name: ../homes/${name}) userList);
-        _module.args = {
-          inherit inputs system;
-          innerLib = innerLib;
-        };
+    users.gab = { config, pkgs, ... }: {
+      imports = [
+        ../homes/common
+      ] ++ (map (name: ../homes/${name}) userList);
+      _module.args = {
+        inherit inputs system;
+        innerLib = innerLib;
       };
     };
   };
