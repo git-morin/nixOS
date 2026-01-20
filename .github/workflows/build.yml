@@ -144,17 +144,25 @@ jobs:
         if: needs.check-changes.outputs.should-eval == 'true'
         run: |
           nix flake show | grep -A 20 nixosConfigurations || true
-          
+
           nix eval --raw .#nixosConfigurations.main.config.system.build.toplevel.drvPath
           echo "✅ Main configuration evaluation successful"
-          
+
           nix eval --raw .#nixosConfigurations.wsl.config.system.build.toplevel.drvPath
           echo "✅ WSL configuration evaluation successful"
-          
+
           nix eval --raw .#nixosConfigurations.server.config.system.build.toplevel.drvPath
           echo "✅ Server configuration evaluation successful"
-          
+
           echo "success=true" >> $GITHUB_OUTPUT
+
+      - name: Evaluate Darwin configurations
+        if: needs.check-changes.outputs.should-eval == 'true'
+        run: |
+          nix flake show | grep -A 20 darwinConfigurations || true
+
+          nix eval --raw .#darwinConfigurations.LNEX2HJR4J9K5.system.drvPath
+          echo "✅ macOS (LNEX2HJR4J9K5) configuration evaluation successful"
 
       - name: Set eval success for skipped step
         if: needs.check-changes.outputs.should-eval != 'true'

@@ -54,7 +54,6 @@
     go
     rustup
     gleam
-    erlang
 
     # Development - Node.js
     fnm
