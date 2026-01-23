@@ -1,6 +1,7 @@
 {
   opts = {
     number = true;
+    relativenumber = true;
     showmode = false;
 
     breakindent = true;

@@ -2,6 +2,6 @@
   globals = {
     mapleader = " ";
     maplocalleader = " ";
-    have_nerd_font = false;  # TODO
+    have_nerd_font = true;
   };
 }

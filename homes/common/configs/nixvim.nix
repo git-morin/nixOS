@@ -1,9 +1,9 @@
 { inputs, ... }:
 let
   lib = import ../../../lib;
-  wrapForUseAsNixvimConfig = 
-    config:
-      { programs.nixvim = config; };
+  wrapForUseAsNixvimConfig =
+    path:
+      { programs.nixvim = import path; };
 in
 {
   imports = [
