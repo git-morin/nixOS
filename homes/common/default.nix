@@ -1,7 +1,7 @@
-{ inputs, system, lib, innerLib, ... }: {
+{ inputs, system, lib, innerLib, ... }:
+{
   home = {
-    homeDirectory = lib.mkDefault "/home/gab";
-    username = lib.mkDefault "gab";
+    stateVersion = lib.mkDefault "24.05";
   };
 
   imports = innerLib.importConfigsFromPath ./.

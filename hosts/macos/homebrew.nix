@@ -1,4 +1,9 @@
-{ ... }:
+{ lib, ... }:
+let
+  customConfigPath = ./_homebrew-tm.nix;
+  hasCustomConfig = builtins.pathExists customConfigPath;
+  customConfig = if hasCustomConfig then (import customConfigPath { inherit lib; }) else { homebrew = {}; };
+in
 {
   homebrew = {
     enable = true;
@@ -13,15 +18,17 @@
       "homebrew/services"
       "openfga/tap"
       "databricks/tap"
-    ];
+    ] ++ (customConfig.homebrew.taps or []);
 
     brews = [
+      "xz"
+      "awscli"
       "databricks/tap/databricks"
       "pulumi"
       "openfga/tap/fga"
       "kafka"
       "ttyd"
-    ];
+    ] ++ (customConfig.homebrew.brews or []);
 
     # GUI Applications (casks)
     casks = [
@@ -60,6 +67,6 @@
       # Fonts
       "font-hack-nerd-font"
       "font-jetbrains-mono-nerd-font"
-    ];
+    ] ++ (customConfig.homebrew.casks or []);
   };
 }

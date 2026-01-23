@@ -1,10 +1,10 @@
 let
   mkLib = inputs: {
-    # Read all .nix files (except default.nix and _meta.nix) and import them
+    # Read all .nix files (except _*.nix files) and import them
     importNixFiles = path:
       let
         nixFiles = builtins.filter
-          (n: n != "default.nix" && n != "_meta.nix" && builtins.match ".*\\.nix$" n != null)
+          (n: n != "default.nix" && builtins.match "^_.*" n == null && builtins.match ".*\\.nix$" n != null)
           (builtins.attrNames (builtins.readDir path));
       in
         map (x: path + "/${x}") nixFiles;
@@ -36,13 +36,19 @@ let
       };
 
     # Generate darwin (macOS) configuration from hosts
-    # Note: home-manager integration disabled due to wayland dependency bug in home-manager's darwin modules
     buildDarwinConfiguration = hostname: hostConfig:
       inputs.nix-darwin.lib.darwinSystem {
         system = hostConfig.system or "aarch64-darwin";
         specialArgs = { inherit inputs; };
         modules = [
           ../hosts/${hostname}
+          inputs.home-manager.darwinModules.home-manager
+          (import ../flakes/home-manager.nix {
+            inherit inputs;
+            system = hostConfig.system or "aarch64-darwin";
+            userList = hostConfig.users or [];
+            primaryUser = hostConfig.primaryUser or "gab";
+          })
         ] ++ (hostConfig.additionalModules or []);
       };
   };

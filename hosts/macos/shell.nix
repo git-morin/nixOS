@@ -46,6 +46,45 @@
       alias rebuild-build='nh darwin build ~/.config/nix-darwin'
       alias rebuild-test='nh darwin test ~/.config/nix-darwin'
 
+      # eza -> ls
+      alias ls='eza --icons --group-directories-first'
+      alias ll='eza -la --icons --group-directories-first --git'
+      alias la='eza -a --icons --group-directories-first'
+      alias lt='eza --tree --icons --level=2'
+      alias lta='eza --tree --icons -a --level=2'
+
+      # bat -> cat
+      alias cat='bat --paging=never'
+      alias catp='bat'  # with pager
+
+      # ripgrep -> grep (for simple cases)
+      alias grep='rg'
+
+      # bottom -> top/htop
+      alias top='btm'
+      alias htop='btm'
+
+      # gdu -> du
+      alias du='gdu'
+
+      # difftastic -> diff
+      alias diff='difft'
+
+      # zoxide (smarter cd)
+      eval "$(zoxide init zsh)"
+      alias cd='z'
+      alias cdi='zi'  # interactive selection
+
+      # procs -> ps
+      alias ps='procs'
+      alias psa='procs -a'
+
+      # dust -> du (tree view)
+      alias dut='dust'
+
+      # duf -> df
+      alias df='duf'
+
       # Micromamba
       export MAMBA_EXE='/opt/homebrew/bin/micromamba'
       export MAMBA_ROOT_PREFIX="$HOME/micromamba"
@@ -57,6 +96,15 @@
           alias micromamba="$MAMBA_EXE"
         fi
         unset __mamba_setup
+      fi
+
+      # Zellij auto-start (only in Ghostty/WezTerm, not in IDEs or nested sessions)
+      if [[ -z "$ZELLIJ" && -z "$VSCODE_INJECTION" && -z "$TERMINAL_EMULATOR" ]]; then
+        case "$TERM_PROGRAM" in
+          ghostty|WezTerm)
+            zellij -l welcome
+            ;;
+        esac
       fi
     '';
   };

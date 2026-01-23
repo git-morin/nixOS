@@ -1,4 +1,5 @@
 {
-    enable = true;
-    defaultEditor = true;
+  enable = true;
+  defaultEditor = true;
+  vimdiffAlias = true;
 }

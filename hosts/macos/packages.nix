@@ -1,10 +1,6 @@
 { pkgs, ... }:
 {
   environment.systemPackages = with pkgs; [
-    # Editors
-    neovim
-    helix
-
     # Terminal & Shell
     zellij
     bash
@@ -22,6 +18,7 @@
     fzf
     tree
     eza # ls
+    zoxide # cd
 
     # File Processing
     jq
@@ -34,6 +31,9 @@
     htop
     bottom
     watch
+    procs # ps
+    dust # du
+    duf # df
 
     # Network Tools
     curl
@@ -50,10 +50,8 @@
     k9s
     minikube
 
-    # Development - Languages & Runtimes
-    go
+    # Development - Rust
     rustup
-    gleam
 
     # Development - Node.js
     fnm
@@ -63,7 +61,8 @@
     pyenv
     pipx
     uv
-
+    micromamba
+    
     # Development - Java/Build
     maven
     go-task
@@ -92,9 +91,6 @@
     nh
 
     # Misc CLI
-    chezmoi
-    tldr
-    imagemagick
     vault
     ansible
     yamllint
