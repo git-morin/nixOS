@@ -1,3 +1,4 @@
+{ lib, ... }:
 let
   customLayoutPath = ./_alpha-tm.nix;
   hasCustomLayout = builtins.pathExists customLayoutPath;
@@ -105,7 +106,7 @@ let
       };
     }
   ];
-  layout = if hasCustomLayout then import customLayoutPath else defaultLayout;
+  layout = if hasCustomLayout then (import customLayoutPath {}) else defaultLayout;
 in
 {
   plugins.alpha = {

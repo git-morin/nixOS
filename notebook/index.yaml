@@ -1,11 +1,11 @@
 page:
   siteTitle: Gab's Notebook
   headHtml: |
-    <snippet var="js.highlightjs" />
-    <with var="js">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark.min.css" media="(prefers-color-scheme: dark)">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github.min.css" media="(prefers-color-scheme: light)">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/languages/nix.min.js"></script>
-    </with>
+    <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
     <style>
       body, p, h1, h2, h3, h4, h5, h6, .mb-3 {
         color: #1f2937;
