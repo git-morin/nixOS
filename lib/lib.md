@@ -1,5 +1,7 @@
 # lib
 
+← [[programming/nix/nixos|Back to NixOS Overview]]
+
 This is my nix `lib` code.
 
 It is functions I use throughout this codebase to reduce boilerplate.

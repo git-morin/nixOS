@@ -1,5 +1,7 @@
 # Flakes
 
+← [[programming/nix/nixos|Back to NixOS Overview]]
+
 These are my `flakes` declarations. 
 
 ## nixos

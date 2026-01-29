@@ -13,4 +13,4 @@ I've been able to keep up with most games up to this date, here's a list of game
 - [Warhammer 40,000: Space Marine 2](https://en.wikipedia.org/wiki/Warhammer_40,000:_Space_Marine_2)
 - [Metal Gear Solid Delta: Snake Eater](https://en.wikipedia.org/wiki/Metal_Gear_Solid_Delta:_Snake_Eater)
 
-Games listed here I've played on my [[LG TV]]# using the [[Nintendo Switch]]# as my Moonlight client and the game running on my PC (with Special K and Sunshine)
+Games listed here I've played on my [[IT/jailbreaking/LG TV]]# using the [[IT/jailbreaking/Nintendo Switch]]# as my Moonlight client and the game running on my PC (with Special K and Sunshine)

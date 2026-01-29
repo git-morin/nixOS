@@ -1,5 +1,7 @@
 # Hosts
 
+← [[programming/nix/nixos|Back to NixOS Overview]]
+
 This directory contains NixOS/nix-darwin configurations for all my machines.
 
 ## Overview

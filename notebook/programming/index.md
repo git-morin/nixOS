@@ -1,7 +1,7 @@
 # Programming
 
 ## Languages
-- [[nix]]# | [[nixos]]#
+- [[nix]]# | [[nix/nixos]]#
 
 
 ## Tools

@@ -2,14 +2,15 @@
 
 I use NixOS to set up my *nix environments.
 
-I currently have three machines which run nixos derivations:
+I currently have four machines which run nix derivations:
 
-- [[main]]# My main personal machine
-- [[server]]# My homelab server machine
-- [[wsl]]# My nixOS set up for a WSL machine (I dual-boot windows)
+- [[main]]# My main personal machine (NixOS)
+- [[server]]# My homelab server machine (NixOS)
+- [[wsl]]# My nixOS set up for a WSL machine (NixOS-WSL)
+- [[macos]]# My work MacBook (nix-darwin)
 
 There is also:
-- [[common]] # My nixOS derivation that is added to each host derivation
+- [[hosts]] # My nixOS derivations for each host (includes common)
 
 You can find most of my nixOS code in this notebook.
 I've added comments to places I felt we're adequate
@@ -29,7 +30,7 @@ flowchart TB
     A["🏠 homes/"] --> Z["📂 common"]
     Z --> C["📂 graphical"] & D["📂 terminal"]
     C --> G["🖥️ main/"]
-    D --> G & I["🖥️ proxmox/"] & H["🖥️ wsl/"]
+    D --> G & I["🖥️ server/"] & H["🖥️ wsl/"] & M["🍎 macos/"]
     style Z fill:#D50000,stroke:#000000
     style C fill:#00C853
     style D fill:#2962FF
