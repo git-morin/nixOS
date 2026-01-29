@@ -50,6 +50,9 @@
     k9s
     minikube
 
+    # Development - Elixir
+    beamMinimal28Packages.elixir_1_20
+
     # Development - Rust
     rustup
 

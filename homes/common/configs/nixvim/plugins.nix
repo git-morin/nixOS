@@ -5,14 +5,7 @@
       enable = true;
     };
 
-    # https://nix-community.github.io/nixvim/plugins/mini/index.html
-    # echasnovski/mini.icons — Icon provider (alternative/complement to web-devicons)
-    mini = {
-      enable = true;
-      modules = {
-        icons = {};
-      };
-    };
+    # mini.nvim modules are configured in mini-extras.nix
 
     # https://nix-community.github.io/nixvim/plugins/which-key/index.html
     # folke/which-key.nvim — Keybinding hint popup
@@ -26,51 +19,29 @@
           keys = {};
         };
         spec = [
-          { __unkeyed-1 = "<leader>c"; group = "Code"; }
-          { __unkeyed-1 = "<leader>g"; group = "Git"; }
-          { __unkeyed-1 = "<leader>s"; group = "Search"; }
-          { __unkeyed-1 = "<leader>w"; group = "Window"; }
           { __unkeyed-1 = "<leader>b"; group = "Buffer"; }
+          { __unkeyed-1 = "<leader>c"; group = "Code"; }
+          { __unkeyed-1 = "<leader>f"; group = "Find"; }
+          { __unkeyed-1 = "<leader>g"; group = "Git"; }
+          { __unkeyed-1 = "<leader>r"; group = "Refactor"; }
+          { __unkeyed-1 = "<leader>s"; group = "Search/Session"; }
+          { __unkeyed-1 = "<leader>t"; group = "Terminal"; }
+          { __unkeyed-1 = "<leader>u"; group = "UI/Undo"; }
+          { __unkeyed-1 = "<leader>w"; group = "Window"; }
+          { __unkeyed-1 = "<leader>x"; group = "Trouble/Diagnostics"; }
+          { __unkeyed-1 = "["; group = "Previous"; }
+          { __unkeyed-1 = "]"; group = "Next"; }
+          { __unkeyed-1 = "g"; group = "Goto"; }
+          { __unkeyed-1 = "z"; group = "Fold/Spelling"; }
         ];
       };
     };
 
+    # neo-tree disabled in favor of oil.nvim
     # https://nix-community.github.io/nixvim/plugins/neo-tree/index.html
     # nvim-neo-tree/neo-tree.nvim — File explorer (includes nui.nvim and plenary.nvim as deps)
     neo-tree = {
-      enable = true;
-      settings = {
-        close_if_last_window = true;
-        popup_border_style = "rounded";
-        enable_git_status = true;
-        enable_diagnostics = true;
-        window = {
-          position = "left";
-          width = 35;
-          mappings = {
-            "<space>" = "none";
-            "P" = {
-              command = "toggle_preview";
-              config = { use_float = true; };
-            };
-          };
-        };
-        filesystem = {
-          follow_current_file = {
-            enabled = true;
-          };
-          use_libuv_file_watcher = true;
-          filtered_items = {
-            visible = true;
-            hide_dotfiles = false;
-            hide_gitignored = false;
-          };
-        };
-        source_selector = {
-          winbar = true;
-          statusline = false;
-        };
-      };
+      enable = false;
     };
 
     # https://nix-community.github.io/nixvim/plugins/snacks/index.html
@@ -214,17 +185,7 @@
       };
     };
 
-    # ==========================================================================
-    # Treesitter
-    # ==========================================================================
-
-    treesitter = {
-      enable = true;
-      settings = {
-        highlight.enable = true;
-        indent.enable = true;
-      };
-    };
+    # Treesitter config moved to treesitter.nix
 
     # lewis6991/gitsigns.nvim — Git markers in buffer
     gitsigns = {

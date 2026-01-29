@@ -51,6 +51,7 @@ in
       "claude-code"
       "burp-suite"
       "meld"
+      "hoppscotch"
 
       # System Utilities
       "amethyst"
@@ -58,7 +59,7 @@ in
       "stats"
 
       # Media
-      "gimp"
+      #"gimp"
       "blackhole-2ch"
 
       # Kubernetes
