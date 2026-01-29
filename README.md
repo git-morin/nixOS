@@ -11,6 +11,7 @@
 │   └── 📟 terminal/      # Configurations for my user with a terminal environment (TUI)
 ├── 🖥️ hosts/           # NixOS configurations for my machines.
 │   ├── 🤝 common/        # Configurations shared across all my hosts.
+│   ├── 💼 macos/         # Configuration for my work computer.
 │   ├── 👑 main/          # Configuration for my main computer.
 │   ├── 🛢️ server/        # Configuration for my homelab server.
 │   └── 📦 wsl/           # Configuration for my WSL environment.
