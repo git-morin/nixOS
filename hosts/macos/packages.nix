@@ -61,7 +61,6 @@
     pnpm
 
     # Development - Python
-    pyenv
     pipx
     uv
     micromamba
