@@ -18,9 +18,11 @@ in
       "homebrew/services"
       "openfga/tap"
       "databricks/tap"
+      "LizardByte/homebrew"
     ] ++ (customConfig.homebrew.taps or []);
 
     brews = [
+      "lz4"
       "xz"
       "awscli"
       "databricks/tap/databricks"
@@ -28,6 +30,7 @@ in
       "openfga/tap/fga"
       "kafka"
       "ttyd"
+      "LizardByte/homebrew/sunshine"
     ] ++ (customConfig.homebrew.brews or []);
 
     # GUI Applications (casks)
