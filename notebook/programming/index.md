@@ -1,10 +1,10 @@
 # Programming
 
 ## Languages
-- [[nix]]# | [[nix/nixos]]#
+- [[nix]]# | [[nix/nixos|nixOS]]# | [[rust]]# | [[python]]# | [[java]]# | [[typescript]]#
 
 
-## Tools
+## Dev tools
 
 - [[Make]]#
 

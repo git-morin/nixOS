@@ -12,7 +12,11 @@ let
       meta = if hasMeta then (import metaPath) { inherit inputs; } else {};
       isDarwin = (meta.type or "") == "darwin";
     in
-      hostType == "directory" && name != "common" && !isDarwin;
+      hostType == "directory"
+      && name != "common"
+      && name != "shared"
+      && hasMeta
+      && !isDarwin;
 
   validHostNames = builtins.filter filterHost (builtins.attrNames allHosts);
 

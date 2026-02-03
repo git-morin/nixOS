@@ -10,7 +10,7 @@ I currently have four machines which run nix derivations:
 - [[macos]]# My work MacBook (nix-darwin)
 
 There is also:
-- [[hosts]] # My nixOS derivations for each host (includes common)
+- [[hosts]]# # My nixOS derivations for each host (includes common)
 
 You can find most of my nixOS code in this notebook.
 I've added comments to places I felt we're adequate
