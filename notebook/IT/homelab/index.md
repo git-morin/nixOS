@@ -1,4 +1,4 @@
-# homelab
+# homelabbing
 
 I run [Proxmox VE](https://www.proxmox.com/) on my homelab server, which allows me to manage virtual machines and containers from a web interface.
 

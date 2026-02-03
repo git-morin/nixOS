@@ -1,4 +1,4 @@
-# Flakes
+# flakes
 
 ← [[programming/nix/nixos|Back to NixOS Overview]]
 

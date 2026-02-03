@@ -3,6 +3,6 @@ let
 in
 {
   imports = lib.importNixFiles ./. ++ [
-    ../common
+    ../shared
   ];
 }

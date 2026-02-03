@@ -16,3 +16,4 @@ I think of `nixos` as `ansible` on steroids, that you install on the host machin
 
 - [Nil](https://github.com/oxalica/nil) - Language server for Nix
 - [Alejandra](https://github.com/kamadorueda/alejandra) - Nix Code Formatter
+- [nh](https://github.com/nix-community/nh) - CLI helper

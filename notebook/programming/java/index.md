@@ -1,4 +1,4 @@
-# Java
+# java
 
 I've used Java professionally, primarily in enterprise environments. Here are my notes:
 
@@ -8,9 +8,11 @@ I've used Java professionally, primarily in enterprise environments. Here are my
 - If using Maven, consider using the Maven Wrapper (`mvnw`) for reproducibility.
 - **Pin your dependencies**.
 
-## Frameworks
+## Frameworks/Libs
 
 - **Spring Boot** - The DI framework for Java
+- **MapStruct** - Mapping in Java
+- **Resilience4J** - Rate-limiting
 
 ## Testing
 

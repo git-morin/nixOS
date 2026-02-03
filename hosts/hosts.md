@@ -1,4 +1,4 @@
-# Hosts
+# hosts
 
 ← [[programming/nix/nixos|Back to NixOS Overview]]
 
@@ -21,8 +21,8 @@ Each host directory contains:
 - `_meta.nix` - Host metadata (hostname, system type)
 - Various module files for specific configurations
 
-## Common Configuration
+## Shared Configuration
 
-The [[common]]# directory contains shared configuration that all NixOS hosts inherit:
+The [[shared]]# directory contains shared configuration that all NixOS hosts inherit:
 
-![[common/default.nix]]
+![[shared/default.nix]]

@@ -1,4 +1,4 @@
-# Typescript
+# typescript
 
 I use typescript both professionally and in my hobby programming.
 
@@ -8,10 +8,11 @@ I am not specialized in front-end development, so my opinion is probably biased 
 Here's a series of tools/libraries/dependencies I've used so far from the node ecosystem which I liked:
 
 - react
-- ts-node
+- ts-node / tsx
 - pnpm
 - tanstack
 - vite
 - vinxi
 - shadcn
 - biomeJS
+- yeoman

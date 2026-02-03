@@ -1,4 +1,4 @@
-# Homes
+# homes
 
 ← [[programming/nix/nixos|Back to NixOS Overview]]
 

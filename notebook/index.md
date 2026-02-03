@@ -1,7 +1,7 @@
 # Gab's Notebook
 
 :::{class="text-center"}
-Just my personal notes.
+Just some loose personal notes.
 :::
 
 ### Programming
@@ -21,16 +21,16 @@ Just my personal notes.
 :::{class="grid grid-cols-2 gap-4 my-4"}
 **My notes on**
 
-- [[IT/homelab]]# - setting up and maintaining a homelab
-- [[IT/security]]# - having good security practices
-- [[IT/jailbreaking]]# - everything I can.
-- [[IT/gaming]]# - setting up and maintaining a gaming environment
+- [[IT/homelab]]#
+- [[IT/security]]# 
+- [[IT/jailbreaking]]#
+- [[IT/gaming]]#
 :::
 
-### NixOS
+### nixOS
 
 :::{class="grid grid-cols-2 gap-4 my-4"}
-**Declarative configs for my machines:**
+**Explore my nixOS configs:**
 
 - [[hosts]]# - NixOS/nix-darwin host configurations
 - [[homes]]# - Home-manager user configurations

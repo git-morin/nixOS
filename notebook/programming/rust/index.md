@@ -1,4 +1,4 @@
-# Rust
+# rust
 
 I use Rust occasionally in my hobby programming.
 
@@ -8,6 +8,7 @@ I do not currently have anything to show about this, but I'll update this page w
 Here's what I like so far about Rust:
 
 - Pattern Matching to enforce every variant
+- `cargo` tool is well-rounded and fast
 - Borrow Checker (once you get past the hurdle of understanding it)
 - `tracing` and `logging` crates making it easy to have traceability
 - Tooling for post-build analysis (and works with `valgrind`)
