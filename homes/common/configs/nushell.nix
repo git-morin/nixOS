@@ -11,6 +11,8 @@
             optimize = "sudo nix-store --optimize"; # optimize nix-store
 
             whoami   = "coreutils --coreutils-prog=whoami"; # fix 'whoami' built-in which might be missing
+
+            notebook = "nix run /etc/nixos#notebook"; # emanote dev server with live reload
         };
     };
 

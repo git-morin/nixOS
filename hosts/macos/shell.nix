@@ -41,6 +41,14 @@
       alias rebuild-build='nh darwin build ~/.config/nix-darwin'
       alias rebuild-test='nh darwin test ~/.config/nix-darwin'
 
+      # Emanote notebook dev server
+      alias notebook='nix run ~/.config/nix-darwin#notebook'
+
+      # Nix store maintenance
+      alias clean='nh clean all'                          # garbage collect old generations
+      alias gc='nix-collect-garbage -d'                   # delete all old generations and gc
+      alias optimize='nix-store --optimize'               # deduplicate nix store
+
       # eza -> ls
       alias ls='eza --icons --group-directories-first'
       alias ll='eza -la --icons --group-directories-first --git'
