@@ -7,6 +7,7 @@
             switch   = "nh os switch (#$env.NIXOS_FLAKE_TARGET)";  # evaluate -> build -> switch to new generation
             test     = "nh os test (#$env.NIXOS_FLAKE_TARGET)";  # evaluate -> test
             clean    = "nh clean all";  # clean up old generations
+            wsl-switch = "sudo nixos-rebuild switch --flake /mnt/c/Users/gab/Dev/nixOS#wsl";  # WSL switch (nh doesn't work with /mnt/c)
             upgrade  = "sudo nix-env --upgrade";  # upgrade packages
             optimize = "sudo nix-store --optimize"; # optimize nix-store
 
