@@ -2,8 +2,9 @@
 
 I run [Proxmox VE](https://www.proxmox.com/) on my homelab server, which allows me to manage virtual machines and containers from a web interface.
 
-## Infrastructure as Code
+## k8s-@-home
 
-The VM and container configurations are defined declaratively in my [[server]]# NixOS configuration.
+I run multiple [TalosOS](https://www.talos.dev/) VMs through proxmox, from multiple machines, to simulate a k8s cluster for me to play with.
 
-See [[programming/nix/nixos]]# for more details on how I use NixOS.
+It is currently deployed through pulumi code I wrote in [[typescript]]#.
+
