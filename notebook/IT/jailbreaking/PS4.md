@@ -8,4 +8,4 @@ I've since started using the [PPPoE version of the exploit](https://github.com/T
 
 I then run [GoldHEN](https://consolemods.org/wiki/PS4:GoldHEN) which allows me to execute game 'backups', mod said games, and also manage my saves (like back them up).
 
-I am currently also looking into burning the Blu-ray exploit, which I'll document here once I've done so.
+As a backup jailbreak method, I also have a burned BD disk with the [BD-JB exploit](https://consolemods.org/wiki/PS4:BD-JB)

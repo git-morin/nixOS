@@ -9,7 +9,7 @@ execute the PPPoE [[PS4]]# exploit on the Prime button (I also don't use prime v
 
 [WebOS Homebrew Channel](https://github.com/webosbrew/webos-homebrew-channel)
 
-[Youtube App](https://github.com/webosbrew/youtube-webos)
+[YouTube App](https://github.com/webosbrew/youtube-webos)
 
 [Remote Remap](https://github.com/Simon34545/lginputhook)
 

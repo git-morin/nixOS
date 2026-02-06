@@ -11,4 +11,4 @@ Here's a list of notes of my devices that I've had to break out of their manufac
 - [[PS4]]# How I jailbroke my ps4.
 - [[Xbox 360]]# How I jailbroke my xbox360.
 - [[HPE iLO]]# How I jailbroke the iLO controller of one of my servers.
-- [[Pixel Phones]]# How I jailbroke my android phones.
+- [[Pixel Phones]]# How I jailbreak my android (pixel) phones.
