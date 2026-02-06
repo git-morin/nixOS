@@ -1,4 +1,9 @@
-{ ... }:
+{ lib, ... }:
+let
+  commonAliases = import ../../lib/aliases.nix;
+  aliasLines = lib.concatStringsSep "\n"
+    (lib.mapAttrsToList (name: cmd: "alias ${name}='${cmd}'") commonAliases);
+in
 {
   programs.zsh = {
     enable = true;
@@ -36,57 +41,20 @@
       # RVM
       export PATH="$PATH:$HOME/.rvm/bin"
 
-      # Aliases
+      # Common aliases (from lib/aliases.nix)
+      ${aliasLines}
+
+      # macOS-specific aliases
       alias rebuild='nh darwin switch ~/.config/nix-darwin'
       alias rebuild-build='nh darwin build ~/.config/nix-darwin'
       alias rebuild-test='nh darwin test ~/.config/nix-darwin'
-
-      # Emanote notebook dev server
       alias notebook='nix run ~/.config/nix-darwin#notebook'
-
-      # Nix store maintenance
-      alias clean='nh clean all'                          # garbage collect old generations
-      alias gc='nix-collect-garbage -d'                   # delete all old generations and gc
-      alias optimize='nix-store --optimize'               # deduplicate nix store
-
-      # eza -> ls
-      alias ls='eza --icons --group-directories-first'
-      alias ll='eza -la --icons --group-directories-first --git'
-      alias la='eza -a --icons --group-directories-first'
-      alias lt='eza --tree --icons --level=2'
-      alias lta='eza --tree --icons -a --level=2'
-
-      # bat -> cat
-      alias cat='bat --paging=never'
-      alias catp='bat'  # with pager
-
-      # ripgrep -> grep (for simple cases)
-      alias grep='rg'
-
-      # bottom -> top/htop
-      alias top='btm'
-      alias htop='btm'
-
-      # gdu -> du
-      alias du='gdu'
-
-      # difftastic -> diff
-      alias diff='difft'
+      alias gc='nix-collect-garbage -d'
 
       # zoxide (smarter cd)
       eval "$(zoxide init zsh)"
       alias cd='z'
-      alias cdi='zi'  # interactive selection
-
-      # procs -> ps
-      alias ps='procs'
-      alias psa='procs -a'
-
-      # dust -> du (tree view)
-      alias dut='dust'
-
-      # duf -> df
-      alias df='duf'
+      alias cdi='zi'
 
       # Micromamba
       export MAMBA_EXE='/opt/homebrew/bin/micromamba'

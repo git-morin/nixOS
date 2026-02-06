@@ -1,7 +1,2 @@
-{
-  imports = [
-    ./nixos.nix
-    ./darwin.nix
-    ./emanote.nix
-  ];
-}
+let lib = import ../lib;
+in { imports = lib.importNixFiles ./.; }

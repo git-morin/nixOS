@@ -1,18 +1,19 @@
+let
+  commonAliases = import ../../../lib/aliases.nix;
+in
 {
     programs.nushell = {
         enable = true;
         configFile.source = ./nushell/config.nu;
-        shellAliases = {
-            flakeGen = "nu -c 'cd /etc/nixos; nix run .#genflake flake.nix; cd -'"; # rebuild flake.nix with flakegen
-            switch   = "nh os switch (#$env.NIXOS_FLAKE_TARGET)";  # evaluate -> build -> switch to new generation
-            test     = "nh os test (#$env.NIXOS_FLAKE_TARGET)";  # evaluate -> test
-            clean    = "nh clean all";  # clean up old generations
-            upgrade  = "sudo nix-env --upgrade";  # upgrade packages
-            optimize = "sudo nix-store --optimize"; # optimize nix-store
-
-            whoami   = "coreutils --coreutils-prog=whoami"; # fix 'whoami' built-in which might be missing
-
-            notebook = "nix run /etc/nixos#notebook"; # emanote dev server with live reload
+        shellAliases = commonAliases // {
+            # NixOS-specific
+            flakeGen = "nu -c 'cd /etc/nixos; nix run .#genflake flake.nix; cd -'";
+            switch   = "nh os switch (#$env.NIXOS_FLAKE_TARGET)";
+            test     = "nh os test (#$env.NIXOS_FLAKE_TARGET)";
+            upgrade  = "sudo nix-env --upgrade";
+            optimize = "sudo nix-store --optimize";
+            whoami   = "coreutils --coreutils-prog=whoami";
+            notebook = "nix run /etc/nixos#notebook";
         };
     };
 

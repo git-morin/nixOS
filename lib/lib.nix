@@ -1,5 +1,5 @@
 let
-  mkLib = inputs: {
+  pureLib = {
     # Read all .nix files (except _*.nix files) and import them
     importNixFiles = path:
       let
@@ -9,15 +9,41 @@ let
       in
         map (x: path + "/${x}") nixFiles;
 
-    # Import config files from a configs directory
+    # Import config files from a configs directory (excludes _*.nix files)
     importConfigsFromPath = basePath:
       let
         configsPath = basePath + "/configs";
         configFiles = builtins.filter
-          (n: n != "default.nix" && builtins.match ".*\\.nix$" n != null)
+          (n: n != "default.nix" && builtins.match "^_.*" n == null && builtins.match ".*\\.nix$" n != null)
           (builtins.attrNames (builtins.readDir configsPath));
       in
         map (x: configsPath + "/${x}") configFiles;
+  };
+
+  withInputs = inputs: pureLib // {
+    # Discover host configurations by reading _meta.nix files from host directories
+    discoverHosts = { hostsDir, filterFn }:
+      let
+        allEntries = builtins.readDir hostsDir;
+
+        getMeta = name:
+          let metaPath = hostsDir + "/${name}/_meta.nix";
+          in if builtins.pathExists metaPath
+             then (import metaPath) { inherit inputs; }
+             else null;
+
+        isValidHost = name:
+          let meta = getMeta name;
+          in allEntries.${name} == "directory"
+             && meta != null
+             && filterFn name meta;
+
+        validNames = builtins.filter isValidHost (builtins.attrNames allEntries);
+      in
+        builtins.listToAttrs (map (name: {
+          inherit name;
+          value = getMeta name;
+        }) validNames);
 
     # Generate NixOS configuration from hosts
     buildNixosConfiguration = hostname: hostConfig:
@@ -27,7 +53,7 @@ let
         modules = [
           ../hosts/${hostname}
           inputs.home-manager.nixosModules.home-manager
-          (import ../flakes/home-manager.nix {
+          (import ../flakes/_home-manager.nix {
             inherit inputs;
             system = hostConfig.system or "x86_64-linux";
             userList = hostConfig.users or [];
@@ -43,7 +69,7 @@ let
         modules = [
           ../hosts/${hostname}
           inputs.home-manager.darwinModules.home-manager
-          (import ../flakes/home-manager.nix {
+          (import ../flakes/_home-manager.nix {
             inherit inputs;
             system = hostConfig.system or "aarch64-darwin";
             userList = hostConfig.users or [];
@@ -53,6 +79,4 @@ let
       };
   };
 in
-(mkLib null) // {
-  withInputs = mkLib;
-}
+pureLib // { inherit withInputs; }
