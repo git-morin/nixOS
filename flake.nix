@@ -36,6 +36,10 @@
     emanote = {
       url = "github:srid/emanote";
     };
+    nix-topology = {
+      url = "github:oddlama/nix-topology";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = {
@@ -49,11 +53,15 @@
     disko,
     nixos-anywhere,
     emanote,
+    nix-topology,
     ...
   }@inputs:
+    let
+      lib = (import ./lib).withInputs inputs;
+    in
     flake-parts.lib.mkFlake { inherit inputs; } {
-      systems = nixpkgs.lib.systems.flakeExposed;
-      imports = [ 
+      systems = lib.discoverSystems ./hosts;
+      imports = [
         ./flakes
       ];
     };

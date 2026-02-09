@@ -45,6 +45,17 @@ let
           value = getMeta name;
         }) validNames);
 
+    # Discover unique system architectures from all host _meta.nix files
+    discoverSystems = hostsDir:
+      let
+        allHosts = (withInputs inputs).discoverHosts {
+          inherit hostsDir;
+          filterFn = _: _: true;
+        };
+        allSystems = map (host: host.system) (builtins.attrValues allHosts);
+      in
+        builtins.attrNames (builtins.listToAttrs (map (s: { name = s; value = true; }) allSystems));
+
     # Generate NixOS configuration from hosts
     buildNixosConfiguration = hostname: hostConfig:
       inputs.nixpkgs.lib.nixosSystem {
@@ -53,6 +64,7 @@ let
         modules = [
           ../hosts/${hostname}
           inputs.home-manager.nixosModules.home-manager
+          inputs.nix-topology.nixosModules.default
           (import ../flakes/_home-manager.nix {
             inherit inputs;
             system = hostConfig.system or "x86_64-linux";
