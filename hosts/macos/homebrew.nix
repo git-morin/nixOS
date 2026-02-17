@@ -19,6 +19,7 @@ in
       "openfga/tap"
       "databricks/tap"
       "LizardByte/homebrew"
+      "peonping/tap"
     ] ++ (customConfig.homebrew.taps or []);
 
     brews = [
@@ -31,6 +32,7 @@ in
       "kafka"
       "ttyd"
       "LizardByte/homebrew/sunshine"
+      "PeonPing/tap/peon-ping"
     ] ++ (customConfig.homebrew.brews or []);
 
     # GUI Applications (casks)
