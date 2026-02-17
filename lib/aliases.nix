@@ -36,6 +36,6 @@
   df = "duf";
 
   # Nix store maintenance
-  clean = "nh clean all";
+  clean = "home-manager expire-generations '-1 days' && sudo nix-collect-garbage -d";
   optimize = "nix-store --optimize";
 }
