@@ -50,6 +50,7 @@ in
       alias rebuild-test='nh darwin test ~/.config/nix-darwin'
       alias notebook='nix run ~/.config/nix-darwin#notebook'
       alias gc='nix-collect-garbage -d'
+      alias good-morning='$GAB_CLAUDE/plugins/gab/commands/good-morning.sh'
 
       # zoxide (smarter cd)
       eval "$(zoxide init zsh)"
@@ -83,5 +84,6 @@ in
   environment.variables = {
     EDITOR = "nvim";
     LANG = "en_US.UTF-8";
+    GAB_CLAUDE = "$HOME/claude";
   };
 }
