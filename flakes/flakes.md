@@ -10,7 +10,7 @@ These are my `flakes` declarations.
 
 ## home-manager
 
-![[home-manager.nix]]
+![[_home-manager.nix]]
 
 ## emanote
 
