@@ -40,6 +40,12 @@ Just some loose personal notes.
 
 ---
 
+:::{class="text-center"}
+[[now]]#
+:::
+
+---
+
 :::{class="text-center text-gray-600 text-sm"}
 *Built with [Emanote](https://emanote.srid.ca)*
 :::
