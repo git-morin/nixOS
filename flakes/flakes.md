@@ -14,4 +14,7 @@ These are my `flakes` declarations.
 
 ## emanote
 
+⚠️ I am not responsible for the damages incurred by the recursion
+that happens mentally when looking at the source code of the notebook via the notebook ⚠️
+
 ![[emanote.nix]]
