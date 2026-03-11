@@ -85,5 +85,26 @@ in
     EDITOR = "nvim";
     LANG = "en_US.UTF-8";
     GAB_CLAUDE = "$HOME/claude";
+
+    # ZScaler SSL CA bundle (fixes SSL interception errors)
+    SSL_CERT_FILE = "$HOME/.certs/ca-bundle.pem";
+    REQUESTS_CA_BUNDLE = "$HOME/.certs/ca-bundle.pem";
+    AWS_CA_BUNDLE = "$HOME/.certs/ca-bundle.pem";
+    CURL_CA_BUNDLE = "$HOME/.certs/ca-bundle.pem";
+    HTTPLIB2_CA_CERTS = "$HOME/.certs/ca-bundle.pem";
   };
+
+  # Download ZScaler CA bundle if not already present (requires VPN)
+  system.activationScripts.postActivation.text = ''
+    CERT_DIR="$HOME/.certs"
+    CERT_FILE="$CERT_DIR/ca-bundle.pem"
+    if [ ! -f "$CERT_FILE" ]; then
+      echo "Downloading ZScaler CA bundle..."
+      mkdir -p "$CERT_DIR"
+      /usr/bin/curl --insecure -o "$CERT_FILE" \
+        https://pkgui.secplat.infosec-prod.lnaws.io/downloads_zscaler/ca-bundle.pem \
+        && echo "ZScaler CA bundle downloaded to $CERT_FILE" \
+        || echo "WARNING: Failed to download ZScaler CA bundle. Ensure you are on VPN."
+    fi
+  '';
 }

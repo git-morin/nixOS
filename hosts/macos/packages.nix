@@ -72,6 +72,7 @@
     # Development - Other Tools
     direnv
     mise
+    bruno
 
     # Database Tools
     lazysql
