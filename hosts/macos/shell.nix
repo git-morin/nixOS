@@ -92,6 +92,7 @@ in
     AWS_CA_BUNDLE = "$HOME/.certs/ca-bundle.pem";
     CURL_CA_BUNDLE = "$HOME/.certs/ca-bundle.pem";
     HTTPLIB2_CA_CERTS = "$HOME/.certs/ca-bundle.pem";
+    NODE_EXTRA_CA_CERTS="$HOME/.certs/ca-bundle.pem";
   };
 
   # Download ZScaler CA bundle if not already present (requires VPN)
