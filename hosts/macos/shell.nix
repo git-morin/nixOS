@@ -10,9 +10,16 @@ in
     enableCompletion = true;
     enableBashCompletion = true;
     enableSyntaxHighlighting = true;
+    enableAutosuggestions = true;
     shellInit = ''
       export EDITOR='nvim'
       export LANG=en_US.UTF-8
+      export MANPATH="/usr/local/man:$MANPATH"
+      export ARCHFLAGS="-arch $(uname -m)"
+      export PATH="$HOME/bin:$HOME/.local/bin:$PATH"
+
+      # Source secrets from outside the repo
+      [[ -f "$HOME/.config/secrets/env.sh" ]] && source "$HOME/.config/secrets/env.sh"
     '';
     interactiveShellInit = ''
       # fnm (Node version manager)
@@ -41,6 +48,11 @@ in
       # RVM
       export PATH="$PATH:$HOME/.rvm/bin"
 
+      # Bun
+      export BUN_INSTALL="$HOME/.bun"
+      export PATH="$BUN_INSTALL/bin:$PATH"
+      [[ -s "$HOME/.bun/_bun" ]] && source "$HOME/.bun/_bun"
+
       # Common aliases (from lib/aliases.nix)
       ${aliasLines}
 
@@ -56,6 +68,9 @@ in
       eval "$(zoxide init zsh)"
       alias cd='z'
       alias cdi='zi'
+
+      # Zellij completions
+      autoload -U +X compinit && compinit . <( zellij setup --generate-completion zsh | sed -Ee 's/^(_(zellij) ).*/compdef \1\2/' )
 
       # Micromamba
       export MAMBA_EXE='/opt/homebrew/bin/micromamba'
@@ -85,6 +100,7 @@ in
     EDITOR = "nvim";
     LANG = "en_US.UTF-8";
     GAB_CLAUDE = "$HOME/claude";
+    B2B_IDENTITY_CLAUDE = "$HOME/b2b-identity/devops/claude";
 
     # ZScaler SSL CA bundle (fixes SSL interception errors)
     SSL_CERT_FILE = "$HOME/.certs/ca-bundle.pem";
@@ -92,7 +108,7 @@ in
     AWS_CA_BUNDLE = "$HOME/.certs/ca-bundle.pem";
     CURL_CA_BUNDLE = "$HOME/.certs/ca-bundle.pem";
     HTTPLIB2_CA_CERTS = "$HOME/.certs/ca-bundle.pem";
-    NODE_EXTRA_CA_CERTS="$HOME/.certs/ca-bundle.pem";
+    NODE_EXTRA_CA_CERTS = "$HOME/.certs/ca-bundle.pem";
   };
 
   # Download ZScaler CA bundle if not already present (requires VPN)

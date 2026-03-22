@@ -1,4 +1,4 @@
-yea{ pkgs, lib, ... }:
+{ pkgs, lib, ... }:
 let
   python = rec {
     defaultVersion = pkgs.python312;
@@ -56,7 +56,6 @@ in
 
       FEED_SOURCES: dict[str, str] = {
           "projects": f"{BASE_URL}/projects.atom?feed_token={FEED_TOKEN}",
-          "activity": f"{BASE_URL}/activity.atom?feed_token={FEED_TOKEN}",
       }
 
       ATOM_NAMESPACE: str = "{http://www.w3.org/2005/Atom}"
@@ -163,7 +162,7 @@ in
           scroll_offset: int,
           max_height: int,
           max_width: int,
-          active_feed: str = "activity",
+          active_feed: str = "projects",
       ) -> None:
           """Draw the main list view of feed entries."""
           header: str = f" GitLab Feed [{active_feed}] "
@@ -308,7 +307,7 @@ in
           stdscr.addstr(max_height // 2, max_width // 2 - 10, "Fetching feed...")
           stdscr.refresh()
 
-          active_feed: str = "activity"
+          active_feed: str = "projects"
           feed_names: list[str] = list(FEED_SOURCES.keys())
 
           entries: list[FeedEntry] = fetch_feed(active_feed)
