@@ -2,5 +2,6 @@
 *.iml
 .result/
 
-# TM-specific configuration
+# Machine-specific secrets and configuration
+**/_secrets.nix
 hosts/macos/homebrew-tm.nix
