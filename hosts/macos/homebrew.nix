@@ -57,6 +57,7 @@ in
       "burp-suite"
       "meld"
       "hoppscotch"
+      "jdk-mission-control"
 
       # System Utilities
       "amethyst"
