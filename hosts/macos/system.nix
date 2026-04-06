@@ -32,7 +32,8 @@
   };
   
   security.pam.services.sudo_local.touchIdAuth = true;
-  system.primaryUser = "Gabriel.Morin";
-  networking.hostName = "LNEX2HJR4J9K5";
+  system.primaryUser = "gabriel.morin";
+  networking.hostName = "LNEGQ7JJR7FWG";
+  networking.computerName = "LNEGQ7JJR7FWG";
   system.stateVersion = 6;
 }

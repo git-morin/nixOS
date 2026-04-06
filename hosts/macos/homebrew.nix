@@ -14,8 +14,6 @@ in
     };
 
     taps = [
-      "homebrew/bundle"
-      "homebrew/services"
       "openfga/tap"
       "databricks/tap"
       "LizardByte/homebrew"
