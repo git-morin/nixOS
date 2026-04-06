@@ -238,20 +238,17 @@
       };
     };
 
-    # https://nix-community.github.io/nixvim/plugins/spectre/index.html
-    # nvim-pack/nvim-spectre — Search and replace across files
-    spectre = {
+    # https://nix-community.github.io/nixvim/plugins/grug-far/index.html
+    # MagicDuck/grug-far.nvim — Find and replace with preview
+    grug-far = {
       enable = true;
       settings = {
-        live_update = true;
-        is_insert_mode = true;
-        default = {
-          find = {
-            cmd = "rg";
-            options = [ "--color=never" "--no-heading" "--with-filename" "--line-number" "--column" ];
-          };
-          replace = {
-            cmd = "sed";
+        headerMaxWidth = 80;
+        windowCreationCommand = "split";
+        transient = false;
+        engines = {
+          ripgrep = {
+            showReplaceDiff = true;
           };
         };
       };
@@ -280,29 +277,29 @@
       action = "<cmd>UndotreeToggle<CR>";
       options.desc = "Toggle undotree";
     }
-    # Spectre
+    # Grug-far (find and replace)
     {
       mode = "n";
       key = "<leader>sr";
-      action.__raw = "function() require('spectre').open() end";
+      action.__raw = "function() require('grug-far').open() end";
       options.desc = "Search and replace";
     }
     {
       mode = "n";
       key = "<leader>sW";
-      action.__raw = "function() require('spectre').open_visual({ select_word = true }) end";
+      action.__raw = "function() require('grug-far').open({ prefills = { search = vim.fn.expand('<cword>') } }) end";
       options.desc = "Search current word";
     }
     {
       mode = "v";
       key = "<leader>sw";
-      action.__raw = "function() require('spectre').open_visual() end";
+      action.__raw = "function() require('grug-far').with_visual_selection() end";
       options.desc = "Search selection";
     }
     {
       mode = "n";
       key = "<leader>sF";
-      action.__raw = "function() require('spectre').open_file_search({ select_word = true }) end";
+      action.__raw = "function() require('grug-far').open({ prefills = { paths = vim.fn.expand('%') } }) end";
       options.desc = "Search in current file";
     }
     # Better hlslens with n/N

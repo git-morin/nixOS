@@ -61,7 +61,7 @@
         "<leader>f" = "format";
       };
       diagnostic = {
-        "<leader>e" = "open_float";
+        "<leader>cd" = "open_float";
         "[d" = "goto_prev";
         "]d" = "goto_next";
       };
