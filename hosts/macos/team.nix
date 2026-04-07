@@ -32,6 +32,7 @@ in
       if [ -f "${dbeaverDataSourcesPath}" ]; then
         mkdir -p "$DBEAVER_WORKSPACE"
         cp "${dbeaverDataSourcesPath}" "$DBEAVER_DATASOURCES"
+        chown -R ${primaryUser} "$(dirname "$DBEAVER_WORKSPACE")" "$DBEAVER_WORKSPACE" "$DBEAVER_DATASOURCES"
       else
         echo "WARNING: DBeaver data sources not found at ${dbeaverDataSourcesPath}"
       fi
