@@ -65,6 +65,7 @@ let
           ../hosts/${hostname}
           inputs.home-manager.nixosModules.home-manager
           inputs.nix-topology.nixosModules.default
+          inputs.sops-nix.nixosModules.sops
           (import ../flakes/_home-manager.nix {
             inherit inputs;
             system = hostConfig.system or "x86_64-linux";
@@ -81,6 +82,7 @@ let
         modules = [
           ../hosts/${hostname}
           inputs.home-manager.darwinModules.home-manager
+          inputs.sops-nix.darwinModules.sops
           (import ../flakes/_home-manager.nix {
             inherit inputs;
             system = hostConfig.system or "aarch64-darwin";

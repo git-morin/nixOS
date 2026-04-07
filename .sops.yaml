@@ -1,0 +1,8 @@
+keys:
+  - &gab age1spmk3j9sjehfn850d4fkmx66f99r60343qw0jwv9wgcr580kwfvqryed0l
+
+creation_rules:
+  - path_regex: secrets/.*\.yaml$
+    key_groups:
+      - age:
+          - *gab

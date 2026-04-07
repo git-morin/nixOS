@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ lib, config, ... }:
 let
   commonAliases = import ../../lib/aliases.nix;
   aliasLines = lib.concatStringsSep "\n"
@@ -111,7 +111,6 @@ in
     NODE_EXTRA_CA_CERTS = "$HOME/.certs/ca-bundle.pem";
   };
 
-  # Download ZScaler CA bundle if not already present (requires VPN)
   system.activationScripts.postActivation.text = ''
     CERT_DIR="$HOME/.certs"
     CERT_FILE="$CERT_DIR/ca-bundle.pem"
@@ -119,7 +118,7 @@ in
       echo "Downloading ZScaler CA bundle..."
       mkdir -p "$CERT_DIR"
       /usr/bin/curl --insecure -o "$CERT_FILE" \
-        https://pkgui.secplat.infosec-prod.lnaws.io/downloads_zscaler/ca-bundle.pem \
+        "$(cat ${config.sops.secrets.zscaler_ca_url.path})" \
         && echo "ZScaler CA bundle downloaded to $CERT_FILE" \
         || echo "WARNING: Failed to download ZScaler CA bundle. Ensure you are on VPN."
     fi
