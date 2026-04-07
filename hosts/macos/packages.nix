@@ -97,5 +97,8 @@
     vault
     ansible
     yamllint
+    go
+    tldr
+    benthos
   ];
 }
