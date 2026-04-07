@@ -1,10 +1,20 @@
-{ primaryUser, ... }:
+{ primaryUser, config, ... }:
 let
   home = "/Users/${primaryUser}";
   mavenSettingsPath = "${home}/team-group/devops/brewfile/settings.xml";
   dbeaverDataSourcesPath = "${home}/team-group/devops/brewfile/dbeaver-data-sources.json";
 in
 {
+  sops = {
+    age.keyFile = "${home}/.config/sops/age/keys.txt";
+    age.sshKeyPaths = [];
+    gnupg.sshKeyPaths = [];
+    defaultSopsFile = ../../secrets/team.yaml;
+    secrets.npm_cfg_1 = {};
+    secrets.npm_cfg_2 = {};
+    secrets.zscaler_ca_url = {};
+  };
+
   system.activationScripts.postActivation.text = ''
     M2_SETTINGS="${home}/.m2/settings.xml"
     if [ ! -f "$M2_SETTINGS" ]; then
@@ -46,13 +56,9 @@ in
       fi
     done
 
-    NPM_REGISTRIES="${home}/.config/secrets/npm-registries.sh"
     if command -v npm &>/dev/null; then
-      if [ -f "$NPM_REGISTRIES" ]; then
-        bash "$NPM_REGISTRIES"
-      else
-        echo "WARNING: npm registries not configured — create $NPM_REGISTRIES"
-      fi
+      npm config set @scope-a:registry="$(cat ${config.sops.secrets.npm_cfg_1.path})"
+      npm config set @scope-b:registry="$(cat ${config.sops.secrets.npm_cfg_2.path})"
     fi
   '';
 }

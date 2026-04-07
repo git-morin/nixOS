@@ -92,6 +92,8 @@
 
     # Nix Tools
     nh
+    age
+    sops
 
     # Misc CLI
     vault
