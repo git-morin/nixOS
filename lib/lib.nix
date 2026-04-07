@@ -77,7 +77,7 @@ let
     buildDarwinConfiguration = hostname: hostConfig:
       inputs.nix-darwin.lib.darwinSystem {
         system = hostConfig.system or "aarch64-darwin";
-        specialArgs = { inherit inputs; };
+        specialArgs = { inherit inputs; primaryUser = hostConfig.primaryUser or ""; };
         modules = [
           ../hosts/${hostname}
           inputs.home-manager.darwinModules.home-manager

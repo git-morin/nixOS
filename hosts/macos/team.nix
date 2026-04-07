@@ -1,21 +1,22 @@
-{ ... }:
+{ primaryUser, ... }:
 let
-  mavenSettingsPath = "$HOME/b2b-identity/devops/brewfile/settings.xml";
-  dbeaverDataSourcesPath = "$HOME/b2b-identity/devops/brewfile/dbeaver-data-sources.json";
+  home = "/Users/${primaryUser}";
+  mavenSettingsPath = "${home}/b2b-identity/devops/brewfile/settings.xml";
+  dbeaverDataSourcesPath = "${home}/b2b-identity/devops/brewfile/dbeaver-data-sources.json";
 in
 {
   system.activationScripts.postActivation.text = ''
-    M2_SETTINGS="$HOME/.m2/settings.xml"
+    M2_SETTINGS="${home}/.m2/settings.xml"
     if [ ! -f "$M2_SETTINGS" ]; then
       if [ -f "${mavenSettingsPath}" ]; then
-        mkdir -p "$HOME/.m2"
+        mkdir -p "${home}/.m2"
         cp "${mavenSettingsPath}" "$M2_SETTINGS"
       else
         echo "WARNING: Maven settings not found at ${mavenSettingsPath}"
       fi
     fi
 
-    DBEAVER_WORKSPACE="$HOME/Library/DBeaverData/workspace6/General/.dbeaver"
+    DBEAVER_WORKSPACE="${home}/Library/DBeaverData/workspace6/General/.dbeaver"
     DBEAVER_DATASOURCES="$DBEAVER_WORKSPACE/data-sources.json"
     if [ ! -f "$DBEAVER_DATASOURCES" ]; then
       if [ -f "${dbeaverDataSourcesPath}" ]; then
@@ -28,7 +29,7 @@ in
 
     # DBeaver cannot resolve Maven Central SSL certs behind the corporate proxy (PKIX error),
     # so drivers are downloaded manually via curl.
-    DBEAVER_DRIVER_BASE="$HOME/Library/DBeaverData/drivers/maven/unknown"
+    DBEAVER_DRIVER_BASE="${home}/Library/DBeaverData/drivers/maven/unknown"
     MAVEN_BASE="https://repo1.maven.org/maven2"
     declare -A DBEAVER_JARS=(
       ["org.postgresql/postgresql-42.7.2.jar"]="org/postgresql/postgresql/42.7.2/postgresql-42.7.2.jar"
@@ -45,7 +46,7 @@ in
       fi
     done
 
-    NPM_REGISTRIES="$HOME/.config/secrets/npm-registries.sh"
+    NPM_REGISTRIES="${home}/.config/secrets/npm-registries.sh"
     if command -v npm &>/dev/null; then
       if [ -f "$NPM_REGISTRIES" ]; then
         bash "$NPM_REGISTRIES"
