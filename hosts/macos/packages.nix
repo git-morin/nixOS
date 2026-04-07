@@ -73,6 +73,7 @@
     direnv
     mise
     bruno
+    opencode
 
     # Database Tools
     lazysql
