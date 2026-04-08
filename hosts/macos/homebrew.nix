@@ -31,6 +31,7 @@ in
       "ttyd"
       "LizardByte/homebrew/sunshine"
       "PeonPing/tap/peon-ping"
+      "jenv"
     ] ++ (customConfig.homebrew.brews or []);
 
     # GUI Applications (casks)
@@ -56,6 +57,7 @@ in
       "meld"
       "hoppscotch"
       "jdk-mission-control"
+      "zulu@17"
 
       # System Utilities
       "amethyst"
