@@ -6,4 +6,8 @@
   programs.zsh.shellAliases = {
     whoami = "coreutils --coreutils-prog=whoami";
   };
+
+  programs.zsh.initExtra = ''
+    eval "$(jenv init -)"
+  '';
 }
