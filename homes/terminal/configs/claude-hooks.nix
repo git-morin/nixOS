@@ -5,6 +5,7 @@
 { pkgs, lib, ... }:
 {
   home.file.".claude/hooks/peon-ping/peon.sh" = lib.mkIf pkgs.stdenv.isDarwin {
+    force = true;
     executable = true;
     text = ''
       #!/bin/bash
