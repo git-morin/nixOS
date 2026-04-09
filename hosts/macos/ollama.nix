@@ -24,6 +24,9 @@ in
   launchd.user.agents.ollama = {
     serviceConfig = {
       ProgramArguments = [ "${pkgs.ollama}/bin/ollama" "serve" ];
+      EnvironmentVariables = {
+        OLLAMA_HOST = "0.0.0.0";
+      };
       RunAtLoad = true;
       KeepAlive = true;
       StandardOutPath = "/tmp/ollama.log";
