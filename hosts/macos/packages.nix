@@ -1,4 +1,21 @@
 { pkgs, ... }:
+let
+  splunk-cli = pkgs.buildGoModule {
+    pname = "splunk-cli";
+    version = "unstable-2026-04-09";
+    src = pkgs.fetchFromGitHub {
+      owner = "kitproj";
+      repo = "splunk-cli";
+      rev = "main";
+      hash = "sha256-Ed/HG3mv4/JyNPUJNcKkf+C/MNl/QekITGDhrlysa9Y=";
+    };
+    vendorHash = "sha256-rSqZKBf5boxqQZgUdoq5SWEey3D1C9Dk0xTZ67tsXpc=";
+    postInstall = ''
+      mv $out/bin/splunk-cli $out/bin/splunk
+    '';
+    meta.description = "A CLI and MCP server for Splunk";
+  };
+in
 {
   environment.systemPackages = with pkgs; [
     # Terminal & Shell
@@ -103,5 +120,8 @@
     go
     tldr
     benthos
+
+    # Splunk
+    splunk-cli
   ];
 }

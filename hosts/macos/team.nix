@@ -13,6 +13,7 @@ in
     secrets.npm_cfg_1 = {};
     secrets.npm_cfg_2 = {};
     secrets.zscaler_ca_url = {};
+    secrets.splunk_nonprod_token = {};
   };
 
   system.activationScripts.postActivation.text = ''
@@ -56,6 +57,16 @@ in
           || echo "WARNING: Failed to download DBeaver driver $target_path"
       fi
     done
+
+    # Splunk CLI env vars (avoids keyring issues during activation)
+    SPLUNK_ENV="${home}/.config/secrets/splunk.sh"
+    mkdir -p "$(dirname "$SPLUNK_ENV")"
+    cat > "$SPLUNK_ENV" <<SPLUNKEOF
+export SPLUNK_HOST="REDACTED_URL"
+export SPLUNK_TOKEN="$(cat ${config.sops.secrets.splunk_nonprod_token.path})"
+SPLUNKEOF
+    chown ${primaryUser} "$SPLUNK_ENV"
+    chmod 600 "$SPLUNK_ENV"
 
     if command -v npm &>/dev/null; then
       npm config set @scope-a:registry="$(cat ${config.sops.secrets.npm_cfg_1.path})"
