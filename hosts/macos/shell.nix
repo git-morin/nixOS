@@ -5,6 +5,11 @@ let
     (lib.mapAttrsToList (name: cmd: "alias ${name}='${cmd}'") commonAliases);
 in
 {
+  programs.direnv = {
+    enable = true;
+    silent = true;
+  };
+
   programs.zsh = {
     enable = true;
     enableCompletion = true;
@@ -25,9 +30,6 @@ in
     interactiveShellInit = ''
       # fnm (Node version manager)
       eval "$(fnm env --use-on-cd --shell zsh)"
-
-      # direnv
-      eval "$(direnv hook zsh)"
 
       # SDKMAN
       export SDKMAN_DIR="$HOME/.sdkman"

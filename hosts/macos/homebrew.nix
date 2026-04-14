@@ -21,8 +21,6 @@ in
     ] ++ (customConfig.homebrew.taps or []);
 
     brews = [
-      "lz4"
-      "xz"
       "awscli"
       "databricks/tap/databricks"
       "pulumi"
@@ -70,10 +68,6 @@ in
 
       # Kubernetes
       "freelens"
-
-      # Fonts
-      "font-hack-nerd-font"
-      "font-jetbrains-mono-nerd-font"
     ] ++ (customConfig.homebrew.casks or []);
   };
 }
