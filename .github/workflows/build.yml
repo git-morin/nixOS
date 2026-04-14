@@ -161,8 +161,8 @@ jobs:
         run: |
           nix flake show | grep -A 20 darwinConfigurations || true
 
-          nix eval --raw .#darwinConfigurations.LNEX2HJR4J9K5.system.drvPath
-          echo "✅ macOS (LNEX2HJR4J9K5) configuration evaluation successful"
+          nix eval --raw .#darwinConfigurations.LNEGQ7JJR7FWG.system.drvPath
+          echo "✅ macOS (LNEGQ7JJR7FWG) configuration evaluation successful"
 
       - name: Set eval success for skipped step
         if: needs.check-changes.outputs.should-eval != 'true'
