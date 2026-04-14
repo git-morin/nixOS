@@ -20,6 +20,7 @@ in
     secrets.databricks_account_id = {};
     secrets.databricks_workspace_id_preprod = {};
     secrets.databricks_workspace_id_prod = {};
+    secrets.techops_password = {};
   };
 
   system.activationScripts.postActivation.text = ''
