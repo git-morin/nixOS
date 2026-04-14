@@ -14,6 +14,12 @@ in
     secrets.npm_tm1_registry = {};
     secrets.zscaler_ca_url = {};
     secrets.splunk_nonprod_token = {};
+    secrets.databricks_host_nonprod = {};
+    secrets.databricks_host_preprod = {};
+    secrets.databricks_host_prod = {};
+    secrets.databricks_account_id = {};
+    secrets.databricks_workspace_id_preprod = {};
+    secrets.databricks_workspace_id_prod = {};
   };
 
   system.activationScripts.postActivation.text = ''
@@ -67,6 +73,34 @@ export SPLUNK_TOKEN="$(cat ${config.sops.secrets.splunk_nonprod_token.path})"
 SPLUNKEOF
     chown ${primaryUser} "$SPLUNK_ENV"
     chmod 600 "$SPLUNK_ENV"
+
+    # Databricks CLI config
+    DATABRICKS_CFG="${home}/.databrickscfg"
+    cat > "$DATABRICKS_CFG" <<DATABRICKSEOF
+; The profile defined in the DEFAULT section is to be used as a fallback when no profile is explicitly specified.
+[DEFAULT]
+
+[ticketmaster-tm1-nonprod]
+host      = $(cat ${config.sops.secrets.databricks_host_nonprod.path})
+auth_type = databricks-cli
+
+[ticketmaster-tm1-preprod]
+host         = $(cat ${config.sops.secrets.databricks_host_preprod.path})
+auth_type    = databricks-cli
+account_id   = $(cat ${config.sops.secrets.databricks_account_id.path})
+workspace_id = $(cat ${config.sops.secrets.databricks_workspace_id_preprod.path})
+
+[ticketmaster-tm1]
+host         = $(cat ${config.sops.secrets.databricks_host_prod.path})
+auth_type    = databricks-cli
+account_id   = $(cat ${config.sops.secrets.databricks_account_id.path})
+workspace_id = $(cat ${config.sops.secrets.databricks_workspace_id_prod.path})
+
+[__settings__]
+default_profile = ticketmaster-tm1-nonprod
+DATABRICKSEOF
+    chown ${primaryUser} "$DATABRICKS_CFG"
+    chmod 600 "$DATABRICKS_CFG"
 
     if command -v npm &>/dev/null; then
       npm config set @ticketmaster:registry="$(cat ${config.sops.secrets.npm_ticketmaster_registry.path})"
