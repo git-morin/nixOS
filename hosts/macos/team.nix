@@ -21,6 +21,10 @@ in
     secrets.databricks_workspace_id_preprod = {};
     secrets.databricks_workspace_id_prod = {};
     secrets.techops_password = {};
+    secrets.jira_mcp_token = {};
+    secrets.jira_mcp_url = {};
+    secrets.glab_token = {};
+    secrets.gitlab_host = {};
   };
 
   system.activationScripts.postActivation.text = ''
@@ -102,6 +106,51 @@ default_profile = ticketmaster-tm1-nonprod
 DATABRICKSEOF
     chown ${primaryUser} "$DATABRICKS_CFG"
     chmod 600 "$DATABRICKS_CFG"
+
+    # glab CLI config (GitLab token + host injected from sops)
+    GLAB_CFG_DIR="${home}/Library/Application Support/glab-cli"
+    GLAB_CFG="$GLAB_CFG_DIR/config.yml"
+    GITLAB_HOST="$(cat ${config.sops.secrets.gitlab_host.path})"
+    mkdir -p "$GLAB_CFG_DIR"
+    cat > "$GLAB_CFG" <<GLABEOF
+git_protocol: ssh
+editor:
+browser:
+glamour_style: dark
+check_update: true
+display_hyperlinks: false
+host: gitlab.com
+no_prompt: false
+telemetry: true
+hosts:
+    gitlab.com:
+        api_protocol: https
+        api_host: gitlab.com
+        token:
+        container_registry_domains: gitlab.com,gitlab.com:443,registry.gitlab.com
+        custom_headers: []
+    $GITLAB_HOST:
+        token: $(cat ${config.sops.secrets.glab_token.path})
+        container_registry_domains: $GITLAB_HOST,$GITLAB_HOST:443,registry.$GITLAB_HOST
+        api_host: $GITLAB_HOST
+        git_protocol: https
+        api_protocol: https
+        user: Gabriel.Morin
+GLABEOF
+    chown ${primaryUser} "$GLAB_CFG"
+    chmod 600 "$GLAB_CFG"
+
+    # Claude Code MCP server configs (Jira + glab)
+    CLAUDE_JSON="${home}/.claude.json"
+    if [ -f "$CLAUDE_JSON" ] && command -v jq &>/dev/null; then
+      JIRA_TOKEN="$(cat ${config.sops.secrets.jira_mcp_token.path})"
+      JIRA_URL="$(cat ${config.sops.secrets.jira_mcp_url.path})"
+      jq --arg token "$JIRA_TOKEN" --arg url "$JIRA_URL" \
+        '.mcpServers.jira = {"type": "http", "url": $url, "headers": {"Authorization": $token}}
+         | .mcpServers.glab = {"type": "stdio", "command": "glab", "args": ["mcp", "serve"]}' \
+        "$CLAUDE_JSON" > "$CLAUDE_JSON.tmp" && mv "$CLAUDE_JSON.tmp" "$CLAUDE_JSON"
+      chown ${primaryUser} "$CLAUDE_JSON"
+    fi
 
     if command -v npm &>/dev/null; then
       npm config set @ticketmaster:registry="$(cat ${config.sops.secrets.npm_ticketmaster_registry.path})"
