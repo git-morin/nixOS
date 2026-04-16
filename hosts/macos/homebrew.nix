@@ -56,6 +56,7 @@ in
       "hoppscotch"
       "jdk-mission-control"
       "zulu@17"
+      "zulu@21"
 
       # System Utilities
       "amethyst"
