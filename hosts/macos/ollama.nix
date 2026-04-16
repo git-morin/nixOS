@@ -2,6 +2,7 @@
 let
   models = [
     "ministral-3:8b"
+    "gemma4:31b"
   ];
 
   pullScript = pkgs.writeShellScript "ollama-pull-models" ''
