@@ -13,7 +13,6 @@ in
     secrets.npm_ticketmaster_registry = {};
     secrets.npm_tm1_registry = {};
     secrets.zscaler_ca_url = {};
-    secrets.splunk_nonprod_token = {};
     secrets.databricks_host_nonprod = {};
     secrets.databricks_host_preprod = {};
     secrets.databricks_host_prod = {};
@@ -68,16 +67,6 @@ in
           || echo "WARNING: Failed to download DBeaver driver $target_path"
       fi
     done
-
-    # Splunk CLI env vars (avoids keyring issues during activation)
-    SPLUNK_ENV="${home}/.config/secrets/splunk.sh"
-    mkdir -p "$(dirname "$SPLUNK_ENV")"
-    cat > "$SPLUNK_ENV" <<SPLUNKEOF
-export SPLUNK_HOST="splunk.nonprod.tktm.io"
-export SPLUNK_TOKEN="$(cat ${config.sops.secrets.splunk_nonprod_token.path})"
-SPLUNKEOF
-    chown ${primaryUser} "$SPLUNK_ENV"
-    chmod 600 "$SPLUNK_ENV"
 
     # Databricks CLI config
     DATABRICKS_CFG="${home}/.databrickscfg"
@@ -151,6 +140,24 @@ GLABEOF
         "$CLAUDE_JSON" > "$CLAUDE_JSON.tmp" && mv "$CLAUDE_JSON.tmp" "$CLAUDE_JSON"
       chown ${primaryUser} "$CLAUDE_JSON"
     fi
+
+    # Claude Code settings.json — declare adaptive thinking capabilities for Opus 4.7 Bedrock ARN
+    CLAUDE_SETTINGS="${home}/.claude/settings.json"
+    if [ -f "$CLAUDE_SETTINGS" ] && command -v jq &>/dev/null; then
+      jq 'del(.env.ANTHROPIC_MODEL) | del(.env.ANTHROPIC_MODEL_SUPPORTED_CAPABILITIES) | .env.ANTHROPIC_DEFAULT_OPUS_MODEL = "arn:aws:bedrock:us-east-1:856708425739:inference-profile/global.anthropic.claude-opus-4-7" | .env.ANTHROPIC_DEFAULT_OPUS_MODEL_SUPPORTED_CAPABILITIES = "effort,xhigh_effort,max_effort,thinking,adaptive_thinking,interleaved_thinking"' \
+        "$CLAUDE_SETTINGS" > "$CLAUDE_SETTINGS.tmp" && mv "$CLAUDE_SETTINGS.tmp" "$CLAUDE_SETTINGS"
+      chown ${primaryUser} "$CLAUDE_SETTINGS"
+    fi
+
+    # GitLab env vars (used by b2bid-sync and other scripts)
+    GITLAB_ENV="${home}/.config/secrets/gitlab.sh"
+    mkdir -p "$(dirname "$GITLAB_ENV")"
+    cat > "$GITLAB_ENV" <<GITLABEOF
+export GITLAB_TOKEN="$(cat ${config.sops.secrets.glab_token.path})"
+export GITLAB_BASE_URL="$(cat ${config.sops.secrets.gitlab_host.path})"
+GITLABEOF
+    chown ${primaryUser} "$GITLAB_ENV"
+    chmod 600 "$GITLAB_ENV"
 
     if command -v npm &>/dev/null; then
       npm config set @ticketmaster:registry="$(cat ${config.sops.secrets.npm_ticketmaster_registry.path})"
