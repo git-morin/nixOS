@@ -21,6 +21,8 @@
       _FXSortFoldersFirst = true;
       AppleShowAllFiles = true;
       QuitMenuItem = true;
+      NewWindowTarget = "Other";
+      NewWindowTargetPath = "file:///Users/gabriel.morin/";
     };
 
     # Screenshots
