@@ -3,10 +3,9 @@ let
   python = rec {
     defaultVersion = pkgs.python312;
     additionalVersions = with pkgs; [
-      python311
+      python313
     ];
     packages = ps: with ps; [
-      pip
       virtualenv
     ];
     default = defaultVersion.withPackages packages;

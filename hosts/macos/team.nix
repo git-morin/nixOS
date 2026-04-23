@@ -22,6 +22,8 @@ in
     secrets.techops_password = {};
     secrets.jira_mcp_token = {};
     secrets.jira_mcp_url = {};
+    secrets.confluence_token = {};
+    secrets.confluence_mcp_url = {};
     secrets.glab_token = {};
     secrets.gitlab_host = {};
   };
@@ -134,8 +136,11 @@ GLABEOF
     if [ -f "$CLAUDE_JSON" ] && command -v jq &>/dev/null; then
       JIRA_TOKEN="$(cat ${config.sops.secrets.jira_mcp_token.path})"
       JIRA_URL="$(cat ${config.sops.secrets.jira_mcp_url.path})"
-      jq --arg token "$JIRA_TOKEN" --arg url "$JIRA_URL" \
+      CONFLUENCE_TOKEN="Token $(cat ${config.sops.secrets.confluence_token.path})"
+      CONFLUENCE_URL="$(cat ${config.sops.secrets.confluence_mcp_url.path})"
+      jq --arg token "$JIRA_TOKEN" --arg url "$JIRA_URL" --arg ctoken "$CONFLUENCE_TOKEN" --arg curl "$CONFLUENCE_URL" \
         '.mcpServers.jira = {"type": "http", "url": $url, "headers": {"Authorization": $token}}
+         | .mcpServers.confluence = {"type": "http", "url": $curl, "headers": {"Authorization": $ctoken}}
          | .mcpServers.glab = {"type": "stdio", "command": "glab", "args": ["mcp", "serve"]}' \
         "$CLAUDE_JSON" > "$CLAUDE_JSON.tmp" && mv "$CLAUDE_JSON.tmp" "$CLAUDE_JSON"
       chown ${primaryUser} "$CLAUDE_JSON"

@@ -2,7 +2,8 @@
 let
   models = [
     "ministral-3:8b"
-    "gemma4:31b"
+    "gemma4:26b"
+    "qwen3.5:9b"
   ];
 
   pullScript = pkgs.writeShellScript "ollama-pull-models" ''
@@ -27,6 +28,7 @@ in
       ProgramArguments = [ "${pkgs.ollama}/bin/ollama" "serve" ];
       EnvironmentVariables = {
         OLLAMA_HOST = "0.0.0.0";
+        OLLAMA_CONTEXT_LENGTH = "262144";
       };
       RunAtLoad = true;
       KeepAlive = true;
