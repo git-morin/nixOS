@@ -1,7 +1,9 @@
 { lib, ... }:
 let
-  customLayoutPath = ./_alpha-tm.nix;
-  hasCustomLayout = builtins.pathExists customLayoutPath;
+  # Machine-local dashboard extension. If the file exists at runtime,
+  # its returned list of alpha layout elements is appended. File lives
+  # outside the flake tree, so it is never seen by git or nix eval.
+  localLuaPath = "~/.config/nvim-alpha-local.lua";
   defaultLayout = [
     {
       type = "padding";
@@ -95,18 +97,37 @@ let
     }
     {
       type = "padding";
-      val = 2;
+      val = 1;
     }
     {
-      type = "text";
-      val = "Neovim loaded";
-      opts = {
-        position = "center";
-        hl = "Comment";
-      };
+      # Runtime extension: if machine-local Lua file exists, append its
+      # returned layout elements. Fallback to "Neovim loaded" text.
+      type = "group";
+      val.__raw = ''
+        (function()
+          local path = vim.fn.expand("${localLuaPath}")
+          if vim.fn.filereadable(path) == 1 then
+            local ok, result = pcall(dofile, path)
+            if ok and type(result) == "table" then
+              return result
+            else
+              return {
+                { type = "text",
+                  val = "alpha-local.lua error: " .. tostring(result),
+                  opts = { position = "center", hl = "ErrorMsg" } },
+              }
+            end
+          end
+          return {
+            { type = "text",
+              val = "Neovim loaded",
+              opts = { position = "center", hl = "Comment" } },
+          }
+        end)()
+      '';
     }
   ];
-  layout = if hasCustomLayout then (import customLayoutPath {}) else defaultLayout;
+  layout = defaultLayout;
 in
 {
   plugins.alpha = {
