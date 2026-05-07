@@ -50,7 +50,6 @@ in
       # Development Tools
       "docker-desktop"
       "dbeaver-community"
-      "claude-code"
       "burp-suite"
       "meld"
       "hoppscotch"

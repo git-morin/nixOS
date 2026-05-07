@@ -168,5 +168,11 @@ GITLABEOF
       npm config set @scope-a:registry="$(cat ${config.sops.secrets.npm_cfg_1.path})"
       npm config set @scope-b:registry="$(cat ${config.sops.secrets.npm_cfg_2.path})"
     fi
+
+    CLAUDE_BIN="${home}/.local/bin/claude"
+    if [ ! -x "$CLAUDE_BIN" ]; then
+      sudo -u ${primaryUser} /bin/bash -c 'curl -fsSL https://claude.ai/install.sh | bash' \
+        || echo "WARNING: Failed to install Claude Code. Run: curl -fsSL https://claude.ai/install.sh | bash"
+    fi
   '';
 }
