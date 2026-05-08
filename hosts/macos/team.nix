@@ -1,4 +1,4 @@
-{ primaryUser, config, ... }:
+{ primaryUser, config, pkgs, ... }:
 let
   home = "/Users/${primaryUser}";
   mavenSettingsPath = "${home}/team-group/devops/brewfile/settings.xml";
@@ -8,6 +8,7 @@ in
   sops = {
     age.keyFile = "${home}/.config/sops/age/keys.txt";
     age.sshKeyPaths = [];
+    age.plugins = [ pkgs.age-plugin-yubikey ];
     gnupg.sshKeyPaths = [];
     defaultSopsFile = ../../secrets/team.yaml;
     secrets.npm_cfg_1 = {};

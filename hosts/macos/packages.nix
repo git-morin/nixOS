@@ -94,6 +94,8 @@
     # Nix Tools
     nh
     age
+    age-plugin-yubikey
+    pinentry_mac
     sops
 
     # Misc CLI
