@@ -67,6 +67,13 @@
       Clicking = true;
       TrackpadRightClick = true;
     };
+
+    # Show hidden files in NSOpenPanel/NSSavePanel (IDE open dialogs, etc.)
+    CustomUserPreferences = {
+      "NSGlobalDomain" = {
+        AppleShowAllFiles = true;
+      };
+    };
   };
   
   fonts.packages = with pkgs.nerd-fonts; [
