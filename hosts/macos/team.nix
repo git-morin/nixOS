@@ -1,4 +1,4 @@
-{ primaryUser, config, pkgs, ... }:
+{ primaryUser, config, pkgs, lib, ... }:
 let
   home = "/Users/${primaryUser}";
   mavenSettingsPath = "${home}/team-group/devops/brewfile/settings.xml";
@@ -8,7 +8,7 @@ in
   sops = {
     age.keyFile = "${home}/.config/sops/age/keys.txt";
     age.sshKeyPaths = [];
-    age.plugins = [ pkgs.age-plugin-yubikey ];
+    age.plugins = [ pkgs.age-plugin-yubikey pkgs.age ];
     gnupg.sshKeyPaths = [];
     defaultSopsFile = ../../secrets/team.yaml;
     secrets.npm_cfg_1 = {};
@@ -29,7 +29,7 @@ in
     secrets.gitlab_host = {};
   };
 
-  system.activationScripts.postActivation.text = ''
+  system.activationScripts.postActivation.text = lib.mkOrder 1600 ''
     M2_SETTINGS="${home}/.m2/settings.xml"
     if [ ! -f "$M2_SETTINGS" ]; then
       if [ -f "${mavenSettingsPath}" ]; then
@@ -60,7 +60,7 @@ in
       ["org.postgresql/postgresql-42.7.2.jar"]="org/postgresql/postgresql/42.7.2/postgresql-42.7.2.jar"
       ["net.postgis/postgis-jdbc-2.5.0.jar"]="net/postgis/postgis-jdbc/2.5.0/postgis-jdbc-2.5.0.jar"
       ["net.postgis/postgis-geometry-2.5.0.jar"]="net/postgis/postgis-geometry/2.5.0/postgis-geometry-2.5.0.jar"
-      ["com.github.waffle/waffle-jna-1.9.1.jar"]="com/github/waffle/waffle-jna/1.9.1/waffle-jna-1.9.1.jar"
+      ["com.github.waffle/waffle-jna-3.6.0.jar"]="com/github/waffle/waffle-jna/3.6.0/waffle-jna-3.6.0.jar"
     )
     for target_path in "''${!DBEAVER_JARS[@]}"; do
       mkdir -p "$DBEAVER_DRIVER_BASE/$(dirname "$target_path")"
@@ -70,6 +70,36 @@ in
           || echo "WARNING: Failed to download DBeaver driver $target_path"
       fi
     done
+    chown -R ${primaryUser} "${home}/Library/DBeaverData"
+
+    # Import ZScaler CA bundle into DBeaver bundled JRE cacerts so the in-app
+    # driver downloader (and any JDBC TLS) trusts the corporate MITM proxy.
+    DBEAVER_JRE="/Applications/DBeaver.app/Contents/Eclipse/jre/Contents/Home"
+    DBEAVER_CACERTS="$DBEAVER_JRE/lib/security/cacerts"
+    DBEAVER_KEYTOOL="$DBEAVER_JRE/bin/keytool"
+    CA_BUNDLE="${home}/.certs/ca-bundle.pem"
+    if [ -x "$DBEAVER_KEYTOOL" ] && [ -f "$DBEAVER_CACERTS" ] && [ -f "$CA_BUNDLE" ]; then
+      TMP_CA_DIR="$(mktemp -d)"
+      /usr/bin/awk -v dir="$TMP_CA_DIR" '
+        /-----BEGIN CERTIFICATE-----/ { idx++; out = dir "/cert-" idx ".pem" }
+        out { print > out }
+        /-----END CERTIFICATE-----/ { close(out); out = "" }
+      ' "$CA_BUNDLE"
+      for cert in "$TMP_CA_DIR"/cert-*.pem; do
+        [ -f "$cert" ] || continue
+        alias_name="zscaler-corp-$(basename "$cert" .pem)"
+        if ! "$DBEAVER_KEYTOOL" -list -alias "$alias_name" \
+              -keystore "$DBEAVER_CACERTS" -storepass changeit >/dev/null 2>&1; then
+          "$DBEAVER_KEYTOOL" -importcert -noprompt -trustcacerts \
+            -alias "$alias_name" -file "$cert" \
+            -keystore "$DBEAVER_CACERTS" -storepass changeit \
+            || echo "WARNING: Failed to import $cert into DBeaver cacerts"
+        fi
+      done
+      rm -rf "$TMP_CA_DIR"
+    else
+      echo "INFO: Skipping DBeaver cacerts import (DBeaver JRE or CA bundle missing)"
+    fi
 
     # Databricks CLI config
     DATABRICKS_CFG="${home}/.databrickscfg"
