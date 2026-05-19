@@ -1,7 +1,7 @@
 # Programming
 
 ## Languages
-- [[nix]]# | [[nix/nixos|nixOS]]# | [[rust]]# | [[python]]# | [[java]]# | [[typescript]]#
+- [[nix]]# | [[nix/nixos|nixOS]] | [[rust]]# | [[python]]# | [[java]]# | [[typescript]]#
 
 
 ## Dev tools
