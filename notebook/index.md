@@ -14,6 +14,11 @@ Just some loose personal notes.
 - [[programming/python]]
 - [[programming/java]]
 - [[programming/typescript]]
+
+**My career in software development**
+
+- [[career/mckesson]]
+- [[career/ticketmaster]]
 :::
 
 ### IT & Infrastructure
