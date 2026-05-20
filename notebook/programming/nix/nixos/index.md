@@ -10,14 +10,14 @@ I currently have four machines which run nix derivations:
 - [[macos]]# My work MacBook (nix-darwin)
 
 There is also:
-- [[hosts]]# - My nixOS derivations for each host (includes common)
+- [[hosts/hosts]]# - My nixOS derivations for each host (includes common)
 
 You can find most of my nixOS code in this notebook.
 I've added comments to places I felt we're adequate
 
-- [[lib]]# My nix functions re-used in my derivations
-- [[homes]]# My home-manager configurations for my various hosts
-- [[flakes]]# My flake-parts derivations
+- [[lib/lib]]# My nix functions re-used in my derivations
+- [[homes/homes]]# My home-manager configurations for my various hosts
+- [[flakes/flakes]]# My flake-parts derivations
 
 Here's a mermaid diagram trying to describe my current setup:
 

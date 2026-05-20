@@ -139,12 +139,10 @@ jobs:
         run: |
           nix flake show
 
-      - name: Evaluate NixOS configurations
+      - name: Evaluate configurations
         id: eval-check
         if: needs.check-changes.outputs.should-eval == 'true'
         run: |
-          nix flake show | grep -A 20 nixosConfigurations || true
-
           nix eval --raw .#nixosConfigurations.main.config.system.build.toplevel.drvPath
           echo "✅ Main configuration evaluation successful"
 
@@ -154,15 +152,10 @@ jobs:
           nix eval --raw .#nixosConfigurations.server.config.system.build.toplevel.drvPath
           echo "✅ Server configuration evaluation successful"
 
-          echo "success=true" >> $GITHUB_OUTPUT
-
-      - name: Evaluate Darwin configurations
-        if: needs.check-changes.outputs.should-eval == 'true'
-        run: |
-          nix flake show | grep -A 20 darwinConfigurations || true
-
           nix eval --raw .#darwinConfigurations.LNEGQ7JJR7FWG.system.drvPath
           echo "✅ macOS (LNEGQ7JJR7FWG) configuration evaluation successful"
+
+          echo "success=true" >> $GITHUB_OUTPUT
 
       - name: Set eval success for skipped step
         if: needs.check-changes.outputs.should-eval != 'true'
