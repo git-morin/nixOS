@@ -32,16 +32,16 @@ Just some loose personal notes.
 :::{class="grid grid-cols-2 gap-4 my-4"}
 **Explore my nixOS configs:**
 
-- [[hosts]] - NixOS/nix-darwin host configurations
-- [[homes]] - Home-manager user configurations
-- [[lib]] - Shared nix functions
-- [[flakes]] - Flake-parts modules
+- [[programming/nix/hosts]] - NixOS/nix-darwin host configurations
+- [[programming/nix/homes]] - Home-manager user configurations
+- [[programming/nix/lib]] - Shared nix functions
+- [[programming/nix/flakes]] - Flake-parts modules
 :::
 
 ---
 
 :::{class="text-center"}
-[[now]]#
+[[now]]
 :::
 
 ---
