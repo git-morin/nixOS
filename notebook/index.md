@@ -43,6 +43,14 @@ Just some loose personal notes.
 - [[programming/nix/flakes]] - Flake-parts modules
 :::
 
+### Misc
+
+:::{class="grid grid-cols-2 gap-4 my-4"}
+**Other notes**
+
+- [[hot-sauce]]
+:::
+
 ---
 
 :::{class="text-center"}
