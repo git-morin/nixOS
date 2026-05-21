@@ -10,6 +10,13 @@ in
     age.sshKeyPaths = [];
     age.plugins = [ pkgs.age-plugin-yubikey pkgs.age ];
     gnupg.sshKeyPaths = [];
+    environment.PATH = lib.mkForce (lib.concatStringsSep ":" [
+      (lib.makeBinPath [ pkgs.age-plugin-yubikey pkgs.age ])
+      "/usr/bin"
+      "/bin"
+      "/usr/sbin"
+      "/sbin"
+    ]);
     defaultSopsFile = ../../secrets/team.yaml;
     secrets.npm_cfg_1 = {};
     secrets.npm_cfg_2 = {};
