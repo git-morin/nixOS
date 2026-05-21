@@ -18,6 +18,7 @@ in
       "databricks/tap"
       "LizardByte/homebrew"
       "peonping/tap"
+      "slp/krunkit"
     ] ++ (customConfig.homebrew.taps or []);
 
     brews = [
@@ -31,6 +32,7 @@ in
       "PeonPing/tap/peon-ping"
       "jenv"
       "podman"
+      "krunkit"
     ] ++ (customConfig.homebrew.brews or []);
 
     # GUI Applications (casks)
