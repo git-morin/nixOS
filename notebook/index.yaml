@@ -287,6 +287,28 @@ page:
         }
       }
 
+      /* Brand logos in tables */
+      td img, th img { max-width: 15%; height: auto; display: inline-block; vertical-align: middle; }
+      td:first-child img { max-width: 30%; }
+      li img { height: 32px; width: auto; display: inline-block; vertical-align: middle; margin-right: 4px; }
+      td:first-child img { max-width: 30%; }
+
+      /* Heat scale badges */
+      .heat {
+        display: inline-block;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.85em;
+        padding: 0.1em 0.45em;
+        border-radius: 4px;
+        border: 1px solid;
+        vertical-align: middle;
+      }
+      .heat-mild     { color: #4ade80; border-color: #4ade80; background: rgba(74,222,128,0.1); }
+      .heat-medium   { color: #facc15; border-color: #facc15; background: rgba(250,204,21,0.1); }
+      .heat-hot      { color: #fb923c; border-color: #fb923c; background: rgba(251,146,60,0.1); }
+      .heat-very-hot { color: #f87171; border-color: #f87171; background: rgba(248,113,113,0.1); }
+      .heat-extreme  { color: #dc2626; border-color: #dc2626; background: rgba(220,38,38,0.1); }
+
       /* Section intro blockquotes */
       .section-intro {
         font-style: italic;
