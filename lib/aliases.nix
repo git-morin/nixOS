@@ -35,6 +35,9 @@
   # duf -> df
   df = "duf";
 
+  # podman -> docker (compat mode)
+  docker = "podman";
+
   # Nix store maintenance
   clean = "sudo nix-collect-garbage -d";
   optimize = "nix-store --optimize";

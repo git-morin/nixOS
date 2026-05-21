@@ -30,6 +30,7 @@ in
       "LizardByte/homebrew/sunshine"
       "PeonPing/tap/peon-ping"
       "jenv"
+      "podman"
     ] ++ (customConfig.homebrew.brews or []);
 
     # GUI Applications (casks)
@@ -48,7 +49,7 @@ in
       "spotify"
 
       # Development Tools
-      "docker-desktop"
+      "podman-desktop"
       "dbeaver-community"
       "burp-suite"
       "meld"
