@@ -15,6 +15,28 @@ page:
       }
       setTimeout(highlightCode, 200);
       document.addEventListener('ema:route-changed', () => setTimeout(highlightCode, 200));
+
+      function mobileTableScroll() {
+        document.querySelectorAll('article table').forEach(function(t) {
+          if (t.parentNode && t.parentNode.classList.contains('mob-table-scroll')) return;
+          var w = document.createElement('div');
+          w.className = 'mob-table-scroll';
+          t.parentNode.insertBefore(w, t);
+          w.appendChild(t);
+        });
+      }
+      setTimeout(mobileTableScroll, 100);
+      document.addEventListener('ema:route-changed', mobileTableScroll);
+
+      function updateHamburger() {
+        var hamburger = document.querySelector('nav.w-full button[class*="bg-orange"]');
+        if (!hamburger) return;
+        var sidebar = document.querySelector('nav#sidebar');
+        var hasSidebar = sidebar && sidebar.textContent.trim().length > 0;
+        hamburger.style.display = hasSidebar ? '' : 'none';
+      }
+      setTimeout(updateHamburger, 100);
+      document.addEventListener('ema:route-changed', updateHamburger);
     </script>
     <style>
       body {
@@ -319,6 +341,37 @@ page:
         .section-intro {
           color: #a8a29e;
         }
+      }
+
+      /* ---- Mobile responsive ---- */
+      @media (max-width: 768px) {
+        body { overflow-x: hidden; }
+
+        /* Uptree widget floats with absolute -top-6 and overlaps the mobile nav */
+        div[class*="absolute"][class*="-top-6"] { display: none !important; }
+
+        /* Scale down oversized page title (text-5xl = 48px is too large) */
+        h1 {
+          font-size: clamp(1.1rem, 5.5vw, 1.75rem) !important;
+          padding-left: 0.5rem !important;
+          padding-right: 0.5rem !important;
+        }
+
+        /* Stack 2-column grids vertically */
+        .grid-cols-2 { grid-template-columns: 1fr !important; }
+
+        /* Compact table to fit mobile width without overflow */
+        table { font-size: 0.85em; }
+        th, td { padding: 0.35em 0.45em !important; }
+
+        /* Bigger logos vs original ~16px, but sized to fit table on mobile */
+        td:first-child img { max-width: none !important; width: 36px !important; height: 36px !important; object-fit: contain !important; }
+        article li img { height: 40px !important; width: auto !important; }
+        nav li img { height: 32px !important; width: 32px !important; object-fit: contain !important; }
+
+        /* Scroll wrapper fallback (JS adds .mob-table-scroll around tables) */
+        .mob-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .mob-table-scroll table { width: auto; }
       }
     </style>
 
