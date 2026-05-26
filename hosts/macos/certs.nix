@@ -3,37 +3,35 @@ let
   home = "/Users/${primaryUser}";
   certDir = "${home}/.certs";
   caBundle = "${certDir}/ca-bundle.pem";
-
-  # Trust-store targets that need the corporate Zscaler CA bundle imported.
-  # Each entry binds a `kind` (currently only `jre`) to its parameters; the
-  # snippet builder dispatches per-kind. Add more kinds (`p11`, `system`,
-  # `firefox-nss`, etc.) by extending `kindSnippets` below.
-  #
-  # Conventions:
-  #   - `name`  : unique short id, used in marker filename + log line.
-  #   - marker  : `${certDir}/.tls-imported-<name>` containing
-  #               sha256(caBundle) + sha256(targetStore). Re-imported when
-  #               either side changes (bundle refresh OR target replacement,
-  #               e.g. JRE upgrade).
   trustStoreTargets = [
     {
       kind = "jre";
       name = "dbeaver";
       jreHome = "/Applications/DBeaver.app/Contents/Eclipse/jre/Contents/Home";
     }
-    # Future examples:
-    # { kind = "jre"; name = "intellij-jbr"; jreHome = "/Applications/IntelliJ IDEA.app/Contents/jbr/Contents/Home"; }
-    # { kind = "jre"; name = "zulu-17"; jreHome = "/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home"; }
+    {
+      kind = "jre";
+      name = "intellij-idea";
+      jreHome = "${home}/Applications/IntelliJ IDEA.app/Contents/jbr/Contents/Home";
+    }
+    {
+      kind = "jre";
+      name = "burp-suite";
+      jreHome = "/Applications/Burp Suite Community Edition.app/Contents/Resources/jre.bundle/Contents/Home";
+    }
+    {
+      kind = "jre";
+      name = "zulu-17";
+      jreHome = "/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home";
+    }
+    {
+      kind = "jre";
+      name = "zulu-21";
+      jreHome = "/Library/Java/JavaVirtualMachines/zulu-21.jdk/Contents/Home";
+    }
   ];
 
-  # Per-kind snippet generators. Each receives the target attrset and must
-  # return a self-contained shell block guarded by a marker file. The marker
-  # path convention is shared so `rm ~/.certs/.tls-imported-*` resets all
-  # imports.
   kindSnippets = {
-    # JRE/JDK cacerts via keytool. Each `keytool` call spawns a JVM
-    # (~1.5s); a Zscaler bundle has ~20 certs so an unguarded import is
-    # ~25s. The marker-gated branch makes warm activations <1s.
     jre = target: ''
       {
         JRE_HOME=${lib.escapeShellArg target.jreHome}
@@ -78,13 +76,6 @@ let
     let fn = kindSnippets.${target.kind} or (throw "certs.nix: unknown kind '${target.kind}' for target '${target.name}'");
     in fn target;
 
-  # CA bundle bootstrap, modeled on the Confluence-canonical zscaler-zsh.sh:
-  #   1. Skip if bundle already present and non-empty (idempotent).
-  #   2. Ping the corporate VPN endpoint; refuse to download if unreachable
-  #      so we don't leave a partial / wrong file on disk.
-  #   3. Download with `--insecure` (Zscaler's cert is not yet trusted —
-  #      this is the bootstrap, not a global SSL bypass).
-  #   4. chown to primaryUser (activation runs as root).
   bundleBootstrap = ''
     {
       CERT_DIR=${lib.escapeShellArg certDir}
@@ -123,14 +114,6 @@ let
   '';
 in
 {
-  # Bundle bootstrap and trust-store imports run together in postActivation.
-  # Order 1650 sits between team.nix (1600) which depends on the bundle for
-  # its DBeaver driver downloads, and podman.nix (1700) which also wants the
-  # bundle present.
-  #
-  # NOTE: the previous bundle-download block in shell.nix is now superseded
-  # by `bundleBootstrap` here (uses primaryUser instead of $HOME, adds VPN
-  # ping + size check per the Confluence guide).
   system.activationScripts.postActivation.text = lib.mkOrder 1650 (
     bundleBootstrap
     + "\n"
