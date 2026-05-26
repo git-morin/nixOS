@@ -1,4 +1,4 @@
-{ lib, config, ... }:
+{ lib, ... }:
 let
   commonAliases = import ../../lib/aliases.nix;
   aliasLines = lib.concatStringsSep "\n"
@@ -102,6 +102,7 @@ in
   environment.variables = {
     EDITOR = "nvim";
     LANG = "en_US.UTF-8";
+    NH_SHOW_ACTIVATION_LOGS = "1";
     GAB_CLAUDE = "$HOME/claude";
     TEAM_CLAUDE = "$HOME/team-group/devops/claude";
 
@@ -114,16 +115,6 @@ in
     NODE_EXTRA_CA_CERTS = "$HOME/.certs/ca-bundle.pem";
   };
 
-  system.activationScripts.postActivation.text = ''
-    CERT_DIR="$HOME/.certs"
-    CERT_FILE="$CERT_DIR/ca-bundle.pem"
-    if [ ! -f "$CERT_FILE" ]; then
-      echo "Downloading ZScaler CA bundle..."
-      mkdir -p "$CERT_DIR"
-      /usr/bin/curl --insecure -o "$CERT_FILE" \
-        "$(cat ${config.sops.secrets.zscaler_ca_url.path})" \
-        && echo "ZScaler CA bundle downloaded to $CERT_FILE" \
-        || echo "WARNING: Failed to download ZScaler CA bundle. Ensure you are on VPN."
-    fi
-  '';
+  # Zscaler CA bundle download + per-tool trust-store imports moved to
+  # certs.nix (see system.activationScripts there).
 }

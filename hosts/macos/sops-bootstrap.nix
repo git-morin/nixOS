@@ -8,6 +8,10 @@ let
 
   fetchScript = ''
     (
+      if [ -s "${keyFile}" ]; then
+        exit 0
+      fi
+
       echo "fetching sops age key from gitlab..." >&2
 
       PASSPHRASE=$(/usr/bin/sudo -H -u ${primaryUser} /usr/bin/security find-generic-password \

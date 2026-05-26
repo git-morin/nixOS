@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, lib, config, ... }:
 {
   system.defaults = {
     # Dock
@@ -86,4 +86,29 @@
   networking.hostName = "LNEGQ7JJR7FWG";
   networking.computerName = "LNEGQ7JJR7FWG";
   system.stateVersion = 6;
+
+  # Skip the userDefaults activation step (~20-25s of `launchctl asuser sudo`
+  # PAM overhead per switch) when system.defaults hasn't changed. Fingerprint
+  # is the store path of a derivation containing the serialized config; a
+  # marker file at /var/lib/nix-darwin/userDefaults.fingerprint records the
+  # last applied path. When they match, the block is skipped.
+  system.activationScripts.userDefaults.text = lib.mkMerge [
+    (lib.mkBefore ''
+      __userDefaultsFingerprint=${pkgs.writeText "user-defaults.json"
+        (builtins.toJSON {
+          inherit (config.system.defaults)
+            dock finder screencapture loginwindow menuExtraClock
+            NSGlobalDomain trackpad CustomUserPreferences;
+        })}
+      __userDefaultsMarker=/var/lib/nix-darwin/userDefaults.fingerprint
+      if [ "$(readlink "$__userDefaultsMarker" 2>/dev/null)" = "$__userDefaultsFingerprint" ]; then
+        echo >&2 "user defaults: unchanged, skipping"
+      else
+    '')
+    (lib.mkAfter ''
+        mkdir -p "$(dirname "$__userDefaultsMarker")"
+        ln -sfn "$__userDefaultsFingerprint" "$__userDefaultsMarker"
+      fi
+    '')
+  ];
 }

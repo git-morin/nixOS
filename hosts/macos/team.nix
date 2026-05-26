@@ -21,6 +21,7 @@ in
     secrets.npm_cfg_1 = {};
     secrets.npm_cfg_2 = {};
     secrets.zscaler_ca_url = {};
+    secrets.vpn_host = {};
     secrets.databricks_host_nonprod = {};
     secrets.databricks_host_preprod = {};
     secrets.databricks_host_prod = {};
@@ -79,34 +80,8 @@ in
     done
     chown -R ${primaryUser} "${home}/Library/DBeaverData"
 
-    # Import ZScaler CA bundle into DBeaver bundled JRE cacerts so the in-app
-    # driver downloader (and any JDBC TLS) trusts the corporate MITM proxy.
-    DBEAVER_JRE="/Applications/DBeaver.app/Contents/Eclipse/jre/Contents/Home"
-    DBEAVER_CACERTS="$DBEAVER_JRE/lib/security/cacerts"
-    DBEAVER_KEYTOOL="$DBEAVER_JRE/bin/keytool"
-    CA_BUNDLE="${home}/.certs/ca-bundle.pem"
-    if [ -x "$DBEAVER_KEYTOOL" ] && [ -f "$DBEAVER_CACERTS" ] && [ -f "$CA_BUNDLE" ]; then
-      TMP_CA_DIR="$(mktemp -d)"
-      /usr/bin/awk -v dir="$TMP_CA_DIR" '
-        /-----BEGIN CERTIFICATE-----/ { idx++; out = dir "/cert-" idx ".pem" }
-        out { print > out }
-        /-----END CERTIFICATE-----/ { close(out); out = "" }
-      ' "$CA_BUNDLE"
-      for cert in "$TMP_CA_DIR"/cert-*.pem; do
-        [ -f "$cert" ] || continue
-        alias_name="zscaler-corp-$(basename "$cert" .pem)"
-        if ! "$DBEAVER_KEYTOOL" -list -alias "$alias_name" \
-              -keystore "$DBEAVER_CACERTS" -storepass changeit >/dev/null 2>&1; then
-          "$DBEAVER_KEYTOOL" -importcert -noprompt -trustcacerts \
-            -alias "$alias_name" -file "$cert" \
-            -keystore "$DBEAVER_CACERTS" -storepass changeit \
-            || echo "WARNING: Failed to import $cert into DBeaver cacerts"
-        fi
-      done
-      rm -rf "$TMP_CA_DIR"
-    else
-      echo "INFO: Skipping DBeaver cacerts import (DBeaver JRE or CA bundle missing)"
-    fi
+    # JRE cacerts imports moved to certs.nix (see system.activationScripts in
+    # that file) so new tools can be added by appending to the targets list.
 
     # Databricks CLI config
     DATABRICKS_CFG="${home}/.databrickscfg"

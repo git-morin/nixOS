@@ -8,7 +8,7 @@
       max-free = 1000000000; # 1 GB
       keep-outputs = true;
       keep-derivations = true;
-      auto-optimise-store = true;
+      auto-optimise-store = false;
       max-jobs = "auto";
       use-xdg-base-directories = true;
       http-connections = 128;
@@ -31,5 +31,6 @@
       dates = "weekly";
       options = "--delete-older-than 2d";
     };
+    optimise.automatic = true;
   };
 }
