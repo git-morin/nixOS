@@ -76,13 +76,6 @@ let
     let fn = kindSnippets.${target.kind} or (throw "certs.nix: unknown kind '${target.kind}' for target '${target.name}'");
     in fn target;
 
-  # Inject Zscaler CA into the nix-daemon environment so fixed-output
-  # derivations (fetchgit, fetchurl) can verify github/etc through the
-  # corporate MITM proxy. `ssl-cert-file` in nix.conf only governs the
-  # daemon's own substituter HTTPS — builder children inherit `cacert`
-  # (Mozilla only) unless NIX_SSL_CERT_FILE is set in the daemon env.
-  # SIP forbids `launchctl setenv` for the system domain, so we mutate
-  # the daemon plist directly and bootstrap-reload it.
   nixDaemonCertSetup = ''
     {
       DAEMON_PLIST="/Library/LaunchDaemons/systems.determinate.nix-daemon.plist"
@@ -124,7 +117,7 @@ let
       else
         echo "[*] Checking VPN connectivity ($VPN_HOST) before Zscaler CA download..."
         if ! /sbin/ping -c 1 -t 3 "$VPN_HOST" >/dev/null 2>&1; then
-          echo "WARNING: Cannot reach $VPN_HOST — skipping Zscaler CA download."
+          echo "WARNING: Cannot reach $VPN_HOST, skipping Zscaler CA download."
           echo "         Connect to VPN and re-run activation to fetch the bundle."
         else
           echo "[*] Downloading Zscaler CA bundle..."
@@ -137,7 +130,7 @@ let
             echo "[+] Zscaler CA bundle downloaded to $CERT_FILE ($(/usr/bin/wc -c < "$CERT_FILE" | /usr/bin/tr -d ' ') bytes)"
           else
             /bin/rm -f "$CERT_FILE"
-            echo "WARNING: Failed to download Zscaler CA bundle — leaving disk clean."
+            echo "WARNING: Failed to download Zscaler CA bundle"
           fi
         fi
       fi

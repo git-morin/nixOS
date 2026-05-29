@@ -1,9 +1,5 @@
 { lib, ... }:
 {
-  # Prune old generations and GC the nix store after every successful
-  # `nh darwin switch` / `darwin-rebuild switch`. Keeps the last 5 system
-  # generations as rollback points. Failure is non-fatal — activation
-  # still succeeds even if the cleanup hits a transient lock or busy GC.
   system.activationScripts.postActivation.text = lib.mkOrder 1900 ''
     {
       NH_BIN="/run/current-system/sw/bin/nh"

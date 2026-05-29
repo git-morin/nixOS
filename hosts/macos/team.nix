@@ -160,7 +160,6 @@ GLABEOF
       chown ${primaryUser} "$CLAUDE_JSON"
     fi
 
-    # Claude Code settings.json — declare adaptive thinking capabilities for Opus 4.7 Bedrock ARN
     CLAUDE_SETTINGS="${home}/.claude/settings.json"
     if [ -f "$CLAUDE_SETTINGS" ] && command -v jq &>/dev/null; then
       jq 'del(.env.ANTHROPIC_MODEL) | del(.env.ANTHROPIC_MODEL_SUPPORTED_CAPABILITIES) | .env.ANTHROPIC_DEFAULT_OPUS_MODEL = "arn:aws:bedrock:us-east-1:REDACTED_ACCOUNT_ID:inference-profile/global.anthropic.claude-opus-4-7" | .env.ANTHROPIC_DEFAULT_OPUS_MODEL_SUPPORTED_CAPABILITIES = "effort,xhigh_effort,max_effort,thinking,adaptive_thinking,interleaved_thinking"' \

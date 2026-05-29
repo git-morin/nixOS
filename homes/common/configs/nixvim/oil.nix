@@ -1,7 +1,7 @@
 {
   plugins = {
     # https://nix-community.github.io/nixvim/plugins/oil/index.html
-    # stevearc/oil.nvim — Edit your filesystem like a buffer
+    # stevearc/oil.nvim
     oil = {
       enable = true;
       settings = {

@@ -2,7 +2,7 @@
 {
   plugins = {
     # https://nix-community.github.io/nixvim/plugins/neotest/index.html
-    # nvim-neotest/neotest — Test runner framework
+    # nvim-neotest/neotest
     neotest = {
       enable = true;
       settings = {

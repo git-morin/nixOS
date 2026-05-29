@@ -2,7 +2,7 @@
 {
   plugins = {
     # https://nix-community.github.io/nixvim/plugins/dap/index.html
-    # mfussenegger/nvim-dap — Debug Adapter Protocol client
+    # mfussenegger/nvim-dap
     dap = {
       enable = true;
 

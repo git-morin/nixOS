@@ -2,8 +2,6 @@
 let
   cfg = config.programs.prek;
   yamlFormat = pkgs.formats.yaml { };
-
-  # Merge declarative localHooks into a synthetic `repo: local` entry.
   effectiveProfile = cfg.profile // {
     repos = (cfg.profile.repos or [ ])
       ++ lib.optional (cfg.localHooks != [ ]) {
@@ -18,10 +16,6 @@ let
   hooksAbsDir = "${config.xdg.configHome}/${hooksRelDir}";
 
   hasProfileHooks = (effectiveProfile.repos or [ ]) != [ ];
-
-  # Only pre-commit is wired globally. Other stages (commit-msg, pre-push, ...)
-  # require git-specific arg handling that `prek run` does not accept on its
-  # positional args, so they are left to per-project `prek install`.
   preCommitScript = ''
     #!${pkgs.runtimeShell}
     # Managed by nix-darwin (programs.prek). Do not edit.
@@ -73,7 +67,7 @@ in
       '';
       description = ''
         User-level prek config rendered to ~/.config/prek/profile.yaml.
-        Schema follows .pre-commit-config.yaml — see
+        Schema follows .pre-commit-config.yaml, see
         https://prek.j178.dev/reference/configuration/.
         For inline shell-based hooks prefer `localHooks`.
       '';
@@ -131,8 +125,6 @@ in
             entry = "''${pkgs.gnugrep}/bin/grep -nE '\\b(TODO|FIXME)\\b'";
             language = "system";
             types = [ "text" ];
-            # grep exits 0 when matches found — we want failure on match.
-            # Wrap with a script if you need inverted exit semantics.
           }
         ]
       '';

@@ -115,7 +115,7 @@
               return name, "ok", result.stdout.strip() or "already up to date"
 
           stderr = result.stderr.strip()
-          # Stale local state is expected in a dev workspace — warn, don't error
+          # Stale local state is expected in a dev workspace
           if any(phrase in stderr for phrase in [
               "no tracking information",
               "no such ref",
@@ -158,7 +158,7 @@
 
           print(f"\n{ok} pulled, {deleted} deleted, {skipped} skipped, {len(warnings)} warnings, {len(errors)} errors")
           if warnings:
-              print("\nWarnings (stale local state — needs manual attention):")
+              print("\nWarnings (stale local state, needs manual attention):")
               for name, detail in warnings:
                   print(f"  {name}: {detail}")
           if errors:
