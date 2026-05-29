@@ -76,6 +76,37 @@ let
     let fn = kindSnippets.${target.kind} or (throw "certs.nix: unknown kind '${target.kind}' for target '${target.name}'");
     in fn target;
 
+  # Inject Zscaler CA into the nix-daemon environment so fixed-output
+  # derivations (fetchgit, fetchurl) can verify github/etc through the
+  # corporate MITM proxy. `ssl-cert-file` in nix.conf only governs the
+  # daemon's own substituter HTTPS — builder children inherit `cacert`
+  # (Mozilla only) unless NIX_SSL_CERT_FILE is set in the daemon env.
+  # SIP forbids `launchctl setenv` for the system domain, so we mutate
+  # the daemon plist directly and bootstrap-reload it.
+  nixDaemonCertSetup = ''
+    {
+      DAEMON_PLIST="/Library/LaunchDaemons/systems.determinate.nix-daemon.plist"
+      DAEMON_CERT="/etc/nix/macos-keychain.crt"
+
+      if [ ! -f "$DAEMON_PLIST" ] || [ ! -s "$DAEMON_CERT" ]; then
+        echo "INFO: nix-daemon plist or $DAEMON_CERT missing; skipping cert injection"
+      else
+        CURRENT="$(/usr/libexec/PlistBuddy -c 'Print :EnvironmentVariables:NIX_SSL_CERT_FILE' "$DAEMON_PLIST" 2>/dev/null || true)"
+        if [ "$CURRENT" = "$DAEMON_CERT" ]; then
+          : # already set
+        else
+          echo "[+] Injecting NIX_SSL_CERT_FILE into nix-daemon plist"
+          /usr/libexec/PlistBuddy -c "Add :EnvironmentVariables dict" "$DAEMON_PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Delete :EnvironmentVariables:NIX_SSL_CERT_FILE" "$DAEMON_PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :EnvironmentVariables:NIX_SSL_CERT_FILE string $DAEMON_CERT" "$DAEMON_PLIST"
+          /bin/launchctl bootout system "$DAEMON_PLIST" 2>/dev/null || true
+          /bin/launchctl bootstrap system "$DAEMON_PLIST" \
+            || echo "WARNING: failed to reload nix-daemon"
+        fi
+      fi
+    }
+  '';
+
   bundleBootstrap = ''
     {
       CERT_DIR=${lib.escapeShellArg certDir}
@@ -116,6 +147,8 @@ in
 {
   system.activationScripts.postActivation.text = lib.mkOrder 1650 (
     bundleBootstrap
+    + "\n"
+    + nixDaemonCertSetup
     + "\n"
     + lib.concatMapStringsSep "\n" importSnippet trustStoreTargets
   );
