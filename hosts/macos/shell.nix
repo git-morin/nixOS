@@ -26,6 +26,7 @@ in
       # Source secrets from outside the repo
       [[ -f "$HOME/.config/secrets/env.sh" ]] && source "$HOME/.config/secrets/env.sh"
       [[ -f "$HOME/.config/secrets/gitlab.sh" ]] && source "$HOME/.config/secrets/gitlab.sh"
+      [[ -f "$HOME/.config/secrets/splunk.sh" ]] && source "$HOME/.config/secrets/splunk.sh"
     '';
     interactiveShellInit = ''
       # fnm (Node version manager)

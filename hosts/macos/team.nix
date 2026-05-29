@@ -35,6 +35,7 @@ in
     secrets.confluence_mcp_url = {};
     secrets.glab_token = {};
     secrets.gitlab_host = {};
+    secrets.splunk_nonprod_token = {};
   };
 
   system.activationScripts.postActivation.text = lib.mkOrder 1600 ''
@@ -176,6 +177,15 @@ export GITLAB_BASE_URL="$(cat ${config.sops.secrets.gitlab_host.path})"
 GITLABEOF
     chown ${primaryUser} "$GITLAB_ENV"
     chmod 600 "$GITLAB_ENV"
+
+    # Splunk env vars (used by team-splunk MCP server)
+    SPLUNK_ENV="${home}/.config/secrets/splunk.sh"
+    mkdir -p "$(dirname "$SPLUNK_ENV")"
+    cat > "$SPLUNK_ENV" <<SPLUNKEOF
+export SPLUNK_NONPROD_TOKEN="$(cat ${config.sops.secrets.splunk_nonprod_token.path})"
+SPLUNKEOF
+    chown ${primaryUser} "$SPLUNK_ENV"
+    chmod 600 "$SPLUNK_ENV"
 
     if command -v npm &>/dev/null; then
       npm config set @scope-a:registry="$(cat ${config.sops.secrets.npm_cfg_1.path})"
