@@ -11,6 +11,7 @@ in
       autoUpdate = true;
       cleanup = "zap";
       upgrade = true;
+      extraFlags = [ "--verbose" ];
     };
 
     taps = [
@@ -33,6 +34,11 @@ in
       "jenv"
       "podman"
       "krunkit"
+      "dtc"
+      "libepoxy"
+      "molten-vk"
+      "slp/krunkit/libkrun-efi"
+      "slp/krunkit/virglrenderer"
     ] ++ (customConfig.homebrew.brews or []);
 
     # GUI Applications (casks)

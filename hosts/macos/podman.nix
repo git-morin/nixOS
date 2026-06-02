@@ -15,7 +15,8 @@
     if [ -n "$PODMAN_HELPER" ]; then
       HELPER_PLIST="/Library/LaunchDaemons/com.github.containers.podman.helper-${primaryUser}.plist"
       if [ ! -f "$HELPER_PLIST" ]; then
-        "$PODMAN_HELPER" install \
+        HELPER_UID=$(/usr/bin/id -u ${primaryUser})
+        SUDO_USER=${primaryUser} SUDO_UID="$HELPER_UID" "$PODMAN_HELPER" install \
           || echo "WARNING: podman-mac-helper install failed"
       fi
     else

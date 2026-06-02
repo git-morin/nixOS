@@ -61,7 +61,7 @@ in
       ${aliasLines}
 
       # macOS-specific aliases
-      alias rebuild='nh darwin switch ~/.config/nix-darwin'
+      alias rebuild='sudo darwin-rebuild switch --flake ~/.config/nix-darwin'
       alias rebuild-build='nh darwin build ~/.config/nix-darwin'
       alias rebuild-test='nh darwin test ~/.config/nix-darwin'
       alias notebook='nix run ~/.config/nix-darwin#notebook'
