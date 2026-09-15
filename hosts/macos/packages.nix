@@ -76,6 +76,8 @@
 
     # Database Tools
     lazysql
+    postgresql # psql client
+    pgcli # psql REPL w/ autocomplete
 
     # Utilities
     coreutils

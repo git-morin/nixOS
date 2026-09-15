@@ -13,8 +13,7 @@ let
     font-family = JetBrainsMono Nerd Font
     font-size = 14
 
-    # Theme
-    theme = catppuccin-mocha
+    theme = Catppuccin Mocha
 
     # Window
     window-padding-x = 8

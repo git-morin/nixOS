@@ -66,6 +66,7 @@ in
       alias rebuild-test='nh darwin test ~/.config/nix-darwin'
       alias notebook='nix run ~/.config/nix-darwin#notebook'
       alias gc='nix-collect-garbage -d'
+      alias secrets='SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt sops -d ~/.config/nix-darwin/secrets/team.yaml'
       alias good-morning='$GAB_CLAUDE/plugins/gab/commands/good-morning.sh'
 
       # zoxide (smarter cd)
@@ -107,6 +108,8 @@ in
     GAB_CLAUDE = "$HOME/claude";
     TEAM_CLAUDE = "$HOME/team-group/devops/claude";
 
+    SOPS_AGE_KEY_FILE = "$HOME/.config/sops/age/keys.txt";
+
     # ZScaler SSL CA bundle (fixes SSL interception errors)
     SSL_CERT_FILE = "$HOME/.certs/ca-bundle.pem";
     REQUESTS_CA_BUNDLE = "$HOME/.certs/ca-bundle.pem";
@@ -114,6 +117,8 @@ in
     CURL_CA_BUNDLE = "$HOME/.certs/ca-bundle.pem";
     HTTPLIB2_CA_CERTS = "$HOME/.certs/ca-bundle.pem";
     NODE_EXTRA_CA_CERTS = "$HOME/.certs/ca-bundle.pem";
+
+    JAVA_TOOL_OPTIONS = "-Djavax.net.ssl.trustStore=$HOME/.certs/cacerts -Djavax.net.ssl.trustStorePassword=changeit";
   };
 
   # Zscaler CA bundle download + per-tool trust-store imports moved to

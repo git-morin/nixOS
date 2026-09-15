@@ -1,8 +1,14 @@
-{ lib, ... }:
+{ lib, config, primaryUser, ... }:
 let
   customConfigPath = ./_homebrew-tm.nix;
   hasCustomConfig = builtins.pathExists customConfigPath;
   customConfig = if hasCustomConfig then (import customConfigPath { inherit lib; }) else { homebrew = {}; };
+  trustEntry = tap:
+    if (tap.clone_target or null) != null then tap.clone_target
+    else lib.toLower tap.name;
+  trustedTaps = lib.sort (a: b: a < b) (map trustEntry config.homebrew.taps);
+  trustJson = builtins.toJSON { trustedtaps = trustedTaps; };
+  trustFile = "/Users/${primaryUser}/.homebrew/trust.json";
 in
 {
   homebrew = {
@@ -19,7 +25,7 @@ in
       "databricks/tap"
       "LizardByte/homebrew"
       "peonping/tap"
-      "slp/krunkit"
+      "libkrun/krun"
     ] ++ (customConfig.homebrew.taps or []);
 
     brews = [
@@ -33,12 +39,7 @@ in
       "PeonPing/tap/peon-ping"
       "jenv"
       "podman"
-      "krunkit"
-      "dtc"
-      "libepoxy"
-      "molten-vk"
-      "slp/krunkit/libkrun-efi"
-      "slp/krunkit/virglrenderer"
+      "libkrun/krun/krunkit"
     ] ++ (customConfig.homebrew.brews or []);
 
     # GUI Applications (casks)
@@ -59,7 +60,6 @@ in
       # Development Tools
       "podman-desktop"
       "dbeaver-community"
-      "burp-suite"
       "meld"
       "hoppscotch"
       "jdk-mission-control"
@@ -79,4 +79,17 @@ in
       "freelens"
     ] ++ (customConfig.homebrew.casks or []);
   };
+
+  system.activationScripts.preActivation.text = lib.mkAfter ''
+    echo >&2 "homebrew: writing tap trust file..."
+    /usr/bin/install -d -o ${primaryUser} -m 700 "/Users/${primaryUser}/.homebrew"
+    printf '%s' ${lib.escapeShellArg trustJson} > "${trustFile}"
+    if [ -s "${config.sops.secrets.gitlab_host.path}" ]; then
+      /usr/bin/sed -i "" "s|REDACTED_URL|$(cat "${config.sops.secrets.gitlab_host.path}")|g" "${trustFile}"
+    else
+      echo >&2 "homebrew: WARNING gitlab_host secret not yet provisioned; tm tap trust will use placeholder URL"
+    fi
+    /usr/sbin/chown ${primaryUser} "${trustFile}"
+    chmod 600 "${trustFile}"
+  '';
 }

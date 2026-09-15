@@ -16,11 +16,6 @@ let
     }
     {
       kind = "jre";
-      name = "burp-suite";
-      jreHome = "/Applications/Burp Suite Community Edition.app/Contents/Resources/jre.bundle/Contents/Home";
-    }
-    {
-      kind = "jre";
       name = "zulu-17";
       jreHome = "/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home";
     }
@@ -30,6 +25,56 @@ let
       jreHome = "/Library/Java/JavaVirtualMachines/zulu-21.jdk/Contents/Home";
     }
   ];
+
+  portableTrustStoreSnippet = ''
+    {
+      DEST=${lib.escapeShellArg "${certDir}/cacerts"}
+      MARKER=${lib.escapeShellArg "${certDir}/.tls-imported-portable"}
+      # Seed JDK: pick the first available host Zulu (matches certs.nix targets above).
+      SEED=""
+      for cand in \
+        "/Library/Java/JavaVirtualMachines/zulu-21.jdk/Contents/Home" \
+        "/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home"; do
+        if [ -x "$cand/bin/keytool" ] && [ -f "$cand/lib/security/cacerts" ]; then
+          SEED="$cand"
+          break
+        fi
+      done
+
+      if [ -z "$SEED" ] || [ ! -s ${lib.escapeShellArg caBundle} ]; then
+        echo "INFO: Skipping portable truststore (seed JDK or CA bundle missing)"
+      else
+        FP="$(/usr/bin/shasum -a 256 ${lib.escapeShellArg caBundle} "$SEED/lib/security/cacerts" 2>/dev/null | /usr/bin/awk '{print $1}' | /usr/bin/tr -d '\n')"
+        if [ "$(/bin/cat "$MARKER" 2>/dev/null)" = "$FP" ] && [ -s "$DEST" ]; then
+          : # already built for this seed/bundle pair
+        else
+          echo "[+] Building portable JVM truststore at $DEST (seed: $SEED)"
+          /bin/cp "$SEED/lib/security/cacerts" "$DEST"
+          /usr/sbin/chown ${primaryUser} "$DEST"
+          /bin/chmod 644 "$DEST"
+          TMP_CA_DIR="$(mktemp -d)"
+          /usr/bin/awk -v dir="$TMP_CA_DIR" '
+            /-----BEGIN CERTIFICATE-----/ { idx++; out = dir "/cert-" idx ".pem" }
+            out { print > out }
+            /-----END CERTIFICATE-----/ { close(out); out = "" }
+          ' ${lib.escapeShellArg caBundle}
+          for cert in "$TMP_CA_DIR"/cert-*.pem; do
+            [ -f "$cert" ] || continue
+            alias_name="zscaler-corp-$(basename "$cert" .pem)"
+            if ! "$SEED/bin/keytool" -list -alias "$alias_name" \
+                  -keystore "$DEST" -storepass changeit >/dev/null 2>&1; then
+              "$SEED/bin/keytool" -importcert -noprompt -trustcacerts \
+                -alias "$alias_name" -file "$cert" \
+                -keystore "$DEST" -storepass changeit >/dev/null 2>&1 \
+                || echo "WARNING: Failed to import $cert into portable truststore"
+            fi
+          done
+          rm -rf "$TMP_CA_DIR"
+          printf '%s' "$FP" > "$MARKER"
+        fi
+      fi
+    }
+  '';
 
   kindSnippets = {
     jre = target: ''
@@ -144,5 +189,7 @@ in
     + nixDaemonCertSetup
     + "\n"
     + lib.concatMapStringsSep "\n" importSnippet trustStoreTargets
+    + "\n"
+    + portableTrustStoreSnippet
   );
 }

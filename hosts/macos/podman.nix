@@ -35,7 +35,7 @@
       if /usr/bin/sudo -u ${primaryUser} /opt/homebrew/bin/podman machine list --format '{{.Running}}' 2>/dev/null | /usr/bin/grep -q true; then
         echo "Installing ZScaler CA into podman machine VM trust store..."
         /bin/cat "$CA_BUNDLE" | /usr/bin/sudo -u ${primaryUser} /opt/homebrew/bin/podman machine ssh \
-          -- "sudo tee /etc/pki/ca-trust/source/anchors/zscaler.pem > /dev/null && sudo update-ca-trust extract" \
+          -- "sudo tee /etc/pki/ca-trust/source/anchors/zscaler.pem > /dev/null && sudo update-ca-trust extract && sudo systemctl restart podman.socket && systemctl --user restart podman.socket" \
           && /usr/bin/sudo -u ${primaryUser} /usr/bin/touch "$MARKER" \
           && echo "ZScaler CA installed in podman VM (marker: $MARKER)" \
           || echo "WARNING: Failed to install ZScaler CA in podman VM."
@@ -44,4 +44,9 @@
       fi
     fi
   '';
+
+  environment.variables = {
+    TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE = "/run/user/$UID/podman/podman.sock";
+    TESTCONTAINERS_RYUK_PRIVILEGED = "true";
+  };
 }
