@@ -35,7 +35,7 @@ in
     secrets.confluence_mcp_url = {};
     secrets.glab_token = {};
     secrets.gitlab_host = {};
-    secrets.splunk_nonprod_token = {};
+    secrets.splunk_nonprod_mcp_token = {};
   };
 
   system.activationScripts.postActivation.text = lib.mkOrder 1600 ''
@@ -177,11 +177,12 @@ GITLABEOF
     chown ${primaryUser} "$GITLAB_ENV"
     chmod 600 "$GITLAB_ENV"
 
-    # Splunk env vars (used by team-splunk MCP server)
+    # Splunk env vars. SPLUNK_NONPROD_MCP_TOKEN is the MCP Encrypted Token for
+    # the official splunk-nonprod MCP server (referenced from ~/.claude.json).
     SPLUNK_ENV="${home}/.config/secrets/splunk.sh"
     mkdir -p "$(dirname "$SPLUNK_ENV")"
     cat > "$SPLUNK_ENV" <<SPLUNKEOF
-export SPLUNK_NONPROD_TOKEN="$(cat ${config.sops.secrets.splunk_nonprod_token.path})"
+export SPLUNK_NONPROD_MCP_TOKEN="$(cat ${config.sops.secrets.splunk_nonprod_mcp_token.path})"
 SPLUNKEOF
     chown ${primaryUser} "$SPLUNK_ENV"
     chmod 600 "$SPLUNK_ENV"
