@@ -36,6 +36,7 @@ in
     secrets.glab_token = {};
     secrets.gitlab_host = {};
     secrets.splunk_nonprod_mcp_token = {};
+    secrets.claude_bedrock_opus_arn = {};
   };
 
   system.activationScripts.postActivation.text = lib.mkOrder 1600 ''
@@ -162,7 +163,8 @@ GLABEOF
 
     CLAUDE_SETTINGS="${home}/.claude/settings.json"
     if [ -f "$CLAUDE_SETTINGS" ] && command -v jq &>/dev/null; then
-      jq 'del(.env.ANTHROPIC_MODEL) | del(.env.ANTHROPIC_MODEL_SUPPORTED_CAPABILITIES) | .env.ANTHROPIC_DEFAULT_OPUS_MODEL = "arn:aws:bedrock:us-east-1:REDACTED_ACCOUNT_ID:inference-profile/global.anthropic.claude-opus-4-7" | .env.ANTHROPIC_DEFAULT_OPUS_MODEL_SUPPORTED_CAPABILITIES = "effort,xhigh_effort,max_effort,thinking,adaptive_thinking,interleaved_thinking"' \
+      OPUS_ARN="$(cat ${config.sops.secrets.claude_bedrock_opus_arn.path})"
+      jq --arg opus "$OPUS_ARN" 'del(.env.ANTHROPIC_MODEL) | del(.env.ANTHROPIC_MODEL_SUPPORTED_CAPABILITIES) | .env.ANTHROPIC_DEFAULT_OPUS_MODEL = $opus | .env.ANTHROPIC_DEFAULT_OPUS_MODEL_SUPPORTED_CAPABILITIES = "effort,xhigh_effort,max_effort,thinking,adaptive_thinking,interleaved_thinking"' \
         "$CLAUDE_SETTINGS" > "$CLAUDE_SETTINGS.tmp" && mv "$CLAUDE_SETTINGS.tmp" "$CLAUDE_SETTINGS"
       chown ${primaryUser} "$CLAUDE_SETTINGS"
     fi

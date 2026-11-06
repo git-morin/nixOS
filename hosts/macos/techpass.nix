@@ -1,16 +1,23 @@
-{ primaryUser, lib, pkgs, ... }:
+{ primaryUser, config, lib, pkgs, ... }:
 let
   app = "/Applications/Tech Pass.app";
-  assetsUrl = "https://REDACTED_URL";
+  assetsUrlFile = config.sops.secrets.techpass_assets_url.path;
 in
 {
+  sops.secrets.techpass_assets_url = {};
+
   # Tech Pass v6 ships as a DMG and updates itself, so nix only installs it once.
   system.activationScripts.postActivation.text = lib.mkOrder 1750 ''
     techpass_install() {
-      local tmp url sha
+      local tmp url sha assets_url
+      if [ ! -s "${assetsUrlFile}" ]; then
+        echo >&2 "techpass: WARNING techpass_assets_url secret not provisioned; skipping install"
+        return 0
+      fi
+      assets_url="$(/bin/cat "${assetsUrlFile}")"
       tmp="$(/usr/bin/mktemp -d)"
-      if ! /usr/bin/curl -fsSL -m 60 "${assetsUrl}" -o "$tmp/assets.json"; then
-        echo >&2 "techpass: WARNING could not fetch ${assetsUrl} (VPN?); skipping install"
+      if ! /usr/bin/curl -fsSL -m 60 "$assets_url" -o "$tmp/assets.json"; then
+        echo >&2 "techpass: WARNING could not fetch assets.json (VPN?); skipping install"
         /bin/rm -rf "$tmp"; return 0
       fi
       url="$(${pkgs.jq}/bin/jq -r '.[] | select(.name | endswith("_universal.dmg")) | .url' "$tmp/assets.json" | /usr/bin/sed 's/ /%20/g')"
