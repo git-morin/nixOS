@@ -106,7 +106,6 @@ in
     LANG = "en_US.UTF-8";
     NH_SHOW_ACTIVATION_LOGS = "1";
     GAB_CLAUDE = "$HOME/claude";
-    TEAM_CLAUDE = "$HOME/team-group/devops/claude";
 
     SOPS_AGE_KEY_FILE = "$HOME/.config/sops/age/keys.txt";
 

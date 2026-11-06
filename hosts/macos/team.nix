@@ -1,8 +1,6 @@
 { primaryUser, config, pkgs, lib, ... }:
 let
   home = "/Users/${primaryUser}";
-  mavenSettingsPath = "${home}/team-group/devops/brewfile/settings.xml";
-  dbeaverDataSourcesPath = "${home}/team-group/devops/brewfile/dbeaver-data-sources.json";
 in
 {
   sops = {
@@ -29,6 +27,10 @@ in
     secrets.databricks_workspace_id_preprod = {};
     secrets.databricks_workspace_id_prod = {};
     secrets.ad_password = {};
+    secrets.databricks_profile_base = {};
+    secrets.team_dir = {};
+    secrets.gitlab_group = {};
+    secrets.team_env_line = {};
     secrets.jira_mcp_token = {};
     secrets.jira_mcp_url = {};
     secrets.confluence_token = {};
@@ -40,25 +42,26 @@ in
   };
 
   system.activationScripts.postActivation.text = lib.mkOrder 1600 ''
+    TEAM_DIR="${home}/$(cat ${config.sops.secrets.team_dir.path})"
     M2_SETTINGS="${home}/.m2/settings.xml"
     if [ ! -f "$M2_SETTINGS" ]; then
-      if [ -f "${mavenSettingsPath}" ]; then
+      if [ -f "$TEAM_DIR/brewfile/settings.xml" ]; then
         mkdir -p "${home}/.m2"
-        cp "${mavenSettingsPath}" "$M2_SETTINGS"
+        cp "$TEAM_DIR/brewfile/settings.xml" "$M2_SETTINGS"
       else
-        echo "WARNING: Maven settings not found at ${mavenSettingsPath}"
+        echo "WARNING: Maven settings not found in team dir"
       fi
     fi
 
     DBEAVER_WORKSPACE="${home}/Library/DBeaverData/workspace6/General/.dbeaver"
     DBEAVER_DATASOURCES="$DBEAVER_WORKSPACE/data-sources.json"
     if [ ! -f "$DBEAVER_DATASOURCES" ]; then
-      if [ -f "${dbeaverDataSourcesPath}" ]; then
+      if [ -f "$TEAM_DIR/brewfile/dbeaver-data-sources.json" ]; then
         mkdir -p "$DBEAVER_WORKSPACE"
-        cp "${dbeaverDataSourcesPath}" "$DBEAVER_DATASOURCES"
+        cp "$TEAM_DIR/brewfile/dbeaver-data-sources.json" "$DBEAVER_DATASOURCES"
         chown -R ${primaryUser} "$(dirname "$DBEAVER_WORKSPACE")" "$DBEAVER_WORKSPACE" "$DBEAVER_DATASOURCES"
       else
-        echo "WARNING: DBeaver data sources not found at ${dbeaverDataSourcesPath}"
+        echo "WARNING: DBeaver data sources not found in team dir"
       fi
     fi
 
@@ -87,28 +90,29 @@ in
 
     # Databricks CLI config
     DATABRICKS_CFG="${home}/.databrickscfg"
+    DBX_PROFILE="$(cat ${config.sops.secrets.databricks_profile_base.path})"
     cat > "$DATABRICKS_CFG" <<DATABRICKSEOF
 ; The profile defined in the DEFAULT section is to be used as a fallback when no profile is explicitly specified.
 [DEFAULT]
 
-[profile-base-nonprod]
+[$DBX_PROFILE-nonprod]
 host      = $(cat ${config.sops.secrets.databricks_host_nonprod.path})
 auth_type = databricks-cli
 
-[profile-base-preprod]
+[$DBX_PROFILE-preprod]
 host         = $(cat ${config.sops.secrets.databricks_host_preprod.path})
 auth_type    = databricks-cli
 account_id   = $(cat ${config.sops.secrets.databricks_account_id.path})
 workspace_id = $(cat ${config.sops.secrets.databricks_workspace_id_preprod.path})
 
-[profile-base]
+[$DBX_PROFILE]
 host         = $(cat ${config.sops.secrets.databricks_host_prod.path})
 auth_type    = databricks-cli
 account_id   = $(cat ${config.sops.secrets.databricks_account_id.path})
 workspace_id = $(cat ${config.sops.secrets.databricks_workspace_id_prod.path})
 
 [__settings__]
-default_profile = profile-base-nonprod
+default_profile = $DBX_PROFILE-nonprod
 DATABRICKSEOF
     chown ${primaryUser} "$DATABRICKS_CFG"
     chmod 600 "$DATABRICKS_CFG"
@@ -175,6 +179,8 @@ GLABEOF
     cat > "$GITLAB_ENV" <<GITLABEOF
 export GITLAB_TOKEN="$(cat ${config.sops.secrets.glab_token.path})"
 export GITLAB_BASE_URL="$(cat ${config.sops.secrets.gitlab_host.path})"
+export GITLAB_GROUP="$(cat ${config.sops.secrets.gitlab_group.path})"
+export $(cat ${config.sops.secrets.team_env_line.path})
 GITLABEOF
     chown ${primaryUser} "$GITLAB_ENV"
     chmod 600 "$GITLAB_ENV"
@@ -190,8 +196,8 @@ SPLUNKEOF
     chmod 600 "$SPLUNK_ENV"
 
     if command -v npm &>/dev/null; then
-      npm config set @scope-a:registry="$(cat ${config.sops.secrets.npm_cfg_1.path})"
-      npm config set @scope-b:registry="$(cat ${config.sops.secrets.npm_cfg_2.path})"
+      npm config set "$(cat ${config.sops.secrets.npm_cfg_1.path})"
+      npm config set "$(cat ${config.sops.secrets.npm_cfg_2.path})"
     fi
 
     CLAUDE_BIN="${home}/.local/bin/claude"

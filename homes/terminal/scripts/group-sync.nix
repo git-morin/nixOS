@@ -7,9 +7,9 @@
       # /// script
       # requires-python = ">=3.12"
       # ///
-      """Pull changes on all active team-group GitLab repos.
+      """Pull changes on all active repos of a GitLab group.
 
-      Fetches non-archived projects from the team-group group (including
+      Fetches non-archived projects from $GITLAB_GROUP (including
       subgroups) and runs `git pull --ff-only` on each local clone.
 
       Usage:
@@ -26,7 +26,7 @@
       from urllib.error import URLError
       from urllib.request import Request, urlopen
 
-      GROUP: str = "team-group"
+      GROUP: str = os.environ["GITLAB_GROUP"]
       LOCAL_ROOT: Path = Path.home() / GROUP
       ABANDON_CUTOFF: str = (date.today() - timedelta(days=365 * 2)).isoformat()
 

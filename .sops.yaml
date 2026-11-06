@@ -3,7 +3,7 @@ keys:
   - &gab_yk age1yubikey1qfu9ph2qzlmp7dfvd989rt5zp5933z0k4vu4kyk2tqxdmrmjhm5859t4mha
 
 creation_rules:
-  - path_regex: secrets/.*\.yaml$
+  - path_regex: secrets/.*
     key_groups:
       - age:
           - *gab_pq
