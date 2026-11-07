@@ -178,7 +178,7 @@ jobs:
   deploy-pages:
     needs: [check-changes, eval]
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.eval.outputs.website-built == 'true' && needs.check-changes.outputs.should-build-website == 'true'
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && needs.eval.outputs.website-built == 'true' && needs.check-changes.outputs.should-build-website == 'true'
     permissions:
       contents: read
       pages: write
