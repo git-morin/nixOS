@@ -9,7 +9,6 @@ on:
   workflow_dispatch:
 
 env:
-  HOME: /root
   NIX_CONFIG: |
     experimental-features = nix-command flakes
     max-jobs = auto
@@ -25,7 +24,7 @@ concurrency:
 
 jobs:
   check-changes:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     outputs:
       nix-changed: ${{ steps.changes.outputs.nix }}
       md-changed: ${{ steps.changes.outputs.md }}
@@ -61,76 +60,22 @@ jobs:
 
   eval:
     needs: check-changes
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: needs.check-changes.outputs.should-eval == 'true' || needs.check-changes.outputs.should-build-website == 'true'
     outputs:
       eval-success: ${{ steps.eval-check.outputs.success }}
       website-built: ${{ steps.build-website.outputs.success }}
     steps:
-      - name: Set up environment
-        run: |
-          echo "HOME=/root" >> $GITHUB_ENV
-          echo "USER=root" >> $GITHUB_ENV
-          echo "Environment setup complete:"
-          echo "HOME: /root"
-          echo "USER: root"
-
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Install Dependencies
-        run: |
-          if ! command -v git &> /dev/null; then
-            sudo apt-get update
-            sudo apt-get install -y git
-          fi
-
-      - name: Setup Nix environment and install if needed
-        id: nix-setup
-        run: |
-          NIX_INSTALLED=false
-          if command -v nix &> /dev/null && nix --version &> /dev/null; then
-            echo "✅ Nix is already installed and functional"
-            echo "Nix version: $(nix --version)"
-            NIX_INSTALLED=true
-          else
-            echo "❌ Nix not found or not functional"
-          fi
-          
-          if ! getent group nixbld >/dev/null; then
-            sudo groupadd -r nixbld
-            echo "✅ Created nixbld group"
-          else
-            echo "✅ nixbld group already exists"
-          fi
-          
-          for i in $(seq 1 10); do
-            if ! getent passwd nixbld$i >/dev/null; then
-              sudo useradd -r -g nixbld -G nixbld -d /var/empty -s /sbin/nologin -c "Nix build user $i" nixbld$i
-              echo "✅ Created nixbld$i user"
-            else
-              echo "✅ nixbld$i user already exists"
-            fi
-          done
-          
-          if [ "$NIX_INSTALLED" = true ]; then
-            echo "install-nix=false" >> $GITHUB_OUTPUT
-          else
-            echo "install-nix=true" >> $GITHUB_OUTPUT
-          fi
-
       - name: Install Nix
-        if: steps.nix-setup.outputs.install-nix == 'true'
         uses: nixbuild/nix-quick-install-action@v30
         with:
           nix_conf: |
             experimental-features = nix-command flakes
-            max-jobs = 4
-            cores = 2
-            trusted-users = root
-            sandbox = false
             keep-env-derivations = true
             keep-outputs = true
 
@@ -232,7 +177,7 @@ jobs:
 
   deploy-pages:
     needs: [check-changes, eval]
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.eval.outputs.website-built == 'true' && needs.check-changes.outputs.should-build-website == 'true'
     permissions:
       contents: read
